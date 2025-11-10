@@ -84,7 +84,8 @@ export default function Home() {
 
   async function handleClaimItem() {
     if (!donorEmail || !donorName || !selectedNeed) return;
-    
+    setIsScrolling(false);  // ADD THIS LINE - stops scrolling when claiming
+
     setIsSubmitting(true);
     
     // Update the item status in database
@@ -252,7 +253,10 @@ export default function Home() {
                         <span className="font-medium" style={{color: '#000080'}}>{need.urgency} left</span>
                       </div>
                       <button 
-                        onClick={() => setSelectedNeed(need)}
+                        onClick={() => {
+                          setSelectedNeed(need);
+                          setIsScrolling(false);
+                        }}
                         className="font-medium transition-colors text-xs px-3 py-1 rounded hover:opacity-90"
                         style={{backgroundColor: '#FF8559', color: 'white'}}
                       >
