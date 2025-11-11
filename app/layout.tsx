@@ -66,11 +66,7 @@ export default function RootLayout({
 </div>
               
               {/* Sign In Button - Navy with subtle styling */}
-              <div>
-                <button className="px-5 py-2 rounded-lg font-medium transition-all hover:opacity-90" style={{backgroundColor: '#000080', color: 'white'}}>
-                  Sign In
-                </button>
-              </div>
+              
             </div>
           </div>
         </nav>
