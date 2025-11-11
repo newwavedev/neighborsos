@@ -141,23 +141,23 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#f5f4f2]">
-      <div className="container mx-auto px-8 py-12">
+      <div className="container mx-auto px-4 md:px-8 py-6 md:py-12">
         
         {/* Header with Navy accent */}
-        <div className="mb-12 border-l-4 border-[#000080] pl-6">
-          <h1 className="text-4xl font-serif text-[#3a3a3a] mb-3">
-            Real people. Real needs. Right now.
-          </h1>
-          <p className="text-lg" style={{color: '#8B8589'}}>
-            Connect with verified charities serving people and animals in crisis
-          </p>
-        </div>
+        <div className="mb-6 md:mb-12 border-l-4 border-[#000080] pl-3 md:pl-6">
+  <h1 className="text-2xl md:text-4xl font-serif text-[#3a3a3a] mb-2 md:mb-3">
+    Real people. Real needs. Right now.
+  </h1>
+  <p className="text-base md:text-lg" style={{color: '#8B8589'}}>
+    Connect with verified charities serving people and animals in crisis
+  </p>
+</div>
 
         {/* Main Content Grid */}
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           
           {/* LEFT: Narrow Image Tiles with Hover Popups (2/3 width) */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 col-span-1">
             <h2 className="text-2xl font-serif text-[#3a3a3a] mb-6">Impact Stories</h2>
             
             {/* Horizontal Scroll Container */}
@@ -166,7 +166,7 @@ export default function Home() {
                 {successStories.map((story) => (
                   <div 
                     key={story.id} 
-                    className={`relative group cursor-pointer transition-all duration-300 hover:z-50 ${hoveredStory !== null && hoveredStory !== story.id ? 'opacity-30' : 'opacity-100'} ${hoveredStory === story.id ? 'w-96' : 'w-20'} ${story.height}`}
+                    className={`relative group cursor-pointer transition-all duration-300 hover:z-50 ${hoveredStory !== null && hoveredStory !== story.id ? 'opacity-30' : 'opacity-100'} ${hoveredStory === story.id ? 'w-80 md:w-96' : 'w-24 md:w-20'} ${story.height}`}
                     onMouseEnter={() => setHoveredStory(story.id)}
                     onMouseLeave={() => setHoveredStory(null)}
                   >
@@ -210,13 +210,13 @@ export default function Home() {
           </div>
 
           {/* RIGHT: Urgent Needs List (1/3 width) */}
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 col-span-1">
             
-            <div className="sticky top-8 bg-white rounded-lg shadow-lg p-6 border-t-4 border-[#000080]">
+            <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 md:p-6 mx-4">
               
               {/* Header */}
               <div className="flex justify-between items-center mb-6 border-b pb-4" style={{borderColor: '#e5e4e2'}}>
-                <h2 className="text-xl font-serif text-[#3a3a3a]">Urgent Needs</h2>
+                <h2 className="text-lg md:text-xl font-serif text-[#3a3a3a]">Urgent Needs</h2>
                 <button 
                   onClick={() => setIsScrolling(!isScrolling)}
                   className="text-xs hover:text-[#000080] transition-colors uppercase tracking-wide"
@@ -228,8 +228,8 @@ export default function Home() {
 
               {/* Scrollable Needs List */}
               <div 
-                ref={scrollRef}
-                className="h-[500px] overflow-y-scroll space-y-4 pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
+  ref={scrollRef}
+  className="h-[400px] md:h-[500px] overflow-y-scroll space-y-4 pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
                 style={{ 
                   scrollBehavior: 'smooth',
                   scrollbarWidth: 'thin',
@@ -277,7 +277,7 @@ export default function Home() {
       {selectedNeed && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6">
-            <h2 className="text-2xl font-serif text-[#3a3a3a] mb-4">Claim This Item</h2>
+            <h2 className="text-xl md:text-2xl font-serif text-[#3a3a3a] mb-4">Claim This Item</h2>
             
             <div className="mb-4 p-4 bg-blue-50 rounded">
               <h3 className="font-semibold text-[#000080] mb-1">{selectedNeed.item}</h3>
