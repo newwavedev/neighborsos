@@ -29,13 +29,46 @@ export default function RootLayout({
                 </span>
               </div>
               
-              {/* Navigation Links */}
-              <div className="hidden md:flex space-x-8">
-                <a href="/" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>Home</a>
-                <a href="/needs" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>Browse Needs</a>
-                <a href="/charities" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>For Charities</a>
-                <a href="/about" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>About</a>
-              </div>
+              <nav>
+  {/* Desktop Navigation - Hidden on Mobile */}
+  <div className="hidden md:flex items-center gap-8">
+    <a href="/" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>Home</a>
+    <a href="/needs" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>Browse Needs</a>
+    <a href="/charities" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>For Charities</a>
+    <a href="/about" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>About</a>
+    <a href="/login" className="bg-[#000080] text-white px-6 py-2 rounded-lg hover:opacity-90 transition-opacity">
+      Sign In
+    </a>
+  </div>
+
+  {/* Mobile Navigation - Shown on Mobile Only */}
+  <div className="md:hidden flex items-center gap-4">
+    <a href="/login" className="bg-[#000080] text-white px-4 py-1.5 rounded-lg text-sm hover:opacity-90 transition-opacity">
+      Sign In
+    </a>
+    <button 
+      onClick={() => {
+        const menu = document.getElementById('mobile-menu');
+        menu?.classList.toggle('hidden');
+      }}
+      className="text-gray-600 hover:text-[#000080] transition-colors"
+    >
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  </div>
+</nav>
+
+{/* Mobile Menu Dropdown */}
+<div id="mobile-menu" className="hidden md:hidden absolute top-16 right-0 bg-white shadow-lg rounded-lg p-4 m-4 z-50 min-w-[200px]">
+  <div className="flex flex-col gap-3">
+    <a href="/" className="font-medium py-2 px-3 rounded hover:bg-gray-100 transition-colors" style={{color: '#8B8589'}}>Home</a>
+    <a href="/needs" className="font-medium py-2 px-3 rounded hover:bg-gray-100 transition-colors" style={{color: '#8B8589'}}>Browse Needs</a>
+    <a href="/charities" className="font-medium py-2 px-3 rounded hover:bg-gray-100 transition-colors" style={{color: '#8B8589'}}>For Charities</a>
+    <a href="/about" className="font-medium py-2 px-3 rounded hover:bg-gray-100 transition-colors" style={{color: '#8B8589'}}>About</a>
+  </div>
+</div>
               
               {/* Sign In Button - Navy with subtle styling */}
               <div>
