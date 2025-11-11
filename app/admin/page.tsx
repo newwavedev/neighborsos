@@ -34,19 +34,39 @@ export default function AdminPage() {
     setLoading(false);
   }
 
-  async function handleApprove(charityId: string) {
-    if (!confirm('Approve this charity?')) return;
+  async function handleApprove(charityId: string, charityName: string, charityEmail: string) {
+  if (!confirm('Approve this charity?')) return;
 
-    const { error } = await supabase
-      .from('charities')
-      .update({ verified: true })
-      .eq('id', charityId);
+  const { error } = await supabase
+    .from('charities')
+    .update({ verified: true })
+    .eq('id', charityId);
 
-    if (!error) {
-      alert('Charity approved!');
-      fetchCharities(); // Refresh list
-    }
+  if (!error) {
+    // Send approval email
+    await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: charityEmail,
+        subject: 'NeighborSOS - Your Charity Has Been Approved! 🎉',
+        html: `
+          <h2>Congratulations, ${charityName}!</h2>
+          <p>Your charity has been verified and approved on NeighborSOS.</p>
+          <p>You can now log in and start posting urgent needs to connect with local donors.</p>
+          <br>
+          <p><a href="https://neighborsos.vercel.app/login" style="background-color: #000080; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Log In to Your Dashboard</a></p>
+          <br>
+          <p>Thank you for joining our mission to help those in need!</p>
+          <p>- The NeighborSOS Team</p>
+        `
+      })
+    });
+    
+    alert('Charity approved and notified!');
+    fetchCharities(); // Refresh list
   }
+}
 
   async function handleReject(charityId: string) {
     if (!confirm('Reject and delete this charity application?')) return;
@@ -116,11 +136,11 @@ export default function AdminPage() {
 
                   <div className="flex gap-3">
                     <button
-                      onClick={() => handleApprove(charity.id)}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
-                    >
-                      ✓ Approve
-                    </button>
+  onClick={() => handleApprove(charity.id, charity.name, charity.contact_email)}
+  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+>
+  ✓ Approve
+</button>
                     <button
                       onClick={() => handleReject(charity.id)}
                       className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"

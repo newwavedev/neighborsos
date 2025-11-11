@@ -138,7 +138,7 @@ export default function CharitiesPage() {
         <div className="mb-8 flex justify-between items-start">
           <div>
             <h1 className="text-4xl font-serif text-[#3a3a3a] mb-3">
-              {charities[0]?.name || 'Charity'} Dashboard
+              Charity Dashboard
             </h1>
             <p className="text-lg" style={{color: '#8B8589'}}>
               Post urgent needs for your organization

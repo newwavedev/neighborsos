@@ -59,13 +59,32 @@ const { error: charityError } = await supabase
   });
 
     if (charityError) {
-      setError('Error creating charity profile. Please contact support.');
-      setIsLoading(false);
-      return;
-    }
+  setError('Error creating charity profile. Please contact support.');
+  setIsLoading(false);
+  return;
+}
 
-    alert('Account created! Your charity will be verified within 24-48 hours. You will receive an email when approved.');
-    router.push('/login');
+// Send welcome email
+await fetch('/api/send-email', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    to: contactEmail,
+    subject: 'Welcome to NeighborSOS - Application Received',
+    html: `
+      <h2>Welcome to NeighborSOS!</h2>
+      <p>Thank you for applying, <strong>${charityName}</strong>!</p>
+      <p>We've received your application and will review it within 24-48 hours.</p>
+      <p>You'll receive another email once your charity is verified and you can start posting urgent needs.</p>
+      <br>
+      <p>Questions? Reply to this email.</p>
+      <p>- The NeighborSOS Team</p>
+    `
+  })
+});
+
+alert('Account created! Check your email for confirmation. You will receive another email when approved.');
+router.push('/login');
   }
 
   return (
