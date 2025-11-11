@@ -19,9 +19,13 @@ export default function Home() {
   const [donorName, setDonorName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Auto-scroll effect for urgent needs
-  useEffect(() => {
-    if (!isScrolling || !scrollRef.current) return;
+  
+  // Auto-scroll effect for urgent needs (desktop only)
+useEffect(() => {
+  // Disable auto-scroll on mobile
+  if (window.innerWidth < 768) return;
+  
+  if (!isScrolling || !scrollRef.current) return;
     
     const scrollContainer = scrollRef.current;
     const scrollInterval = setInterval(() => {
@@ -216,15 +220,18 @@ export default function Home() {
               
               {/* Header */}
               <div className="flex justify-between items-center mb-6 border-b pb-4" style={{borderColor: '#e5e4e2'}}>
-                <h2 className="text-lg md:text-xl font-serif text-[#3a3a3a]">Urgent Needs</h2>
-                <button 
-                  onClick={() => setIsScrolling(!isScrolling)}
-                  className="text-xs hover:text-[#000080] transition-colors uppercase tracking-wide"
-                  style={{color: '#8B8589'}}
-                >
-                  {isScrolling ? 'Pause' : 'Resume'}
-                </button>
-              </div>
+  <div>
+    <h2 className="text-lg md:text-xl font-serif text-[#3a3a3a]">Urgent Needs</h2>
+    <p className="text-xs md:hidden text-gray-500 mt-1">↓ Scroll to see more items</p>
+  </div>
+  <button 
+    onClick={() => setIsScrolling(!isScrolling)}
+    className="hidden md:block text-xs hover:text-[#000080] transition-colors uppercase tracking-wide"
+    style={{color: '#8B8589'}}
+  >
+    {isScrolling ? 'Pause' : 'Resume'}
+  </button>
+</div>
 
               {/* Scrollable Needs List */}
               <div 
