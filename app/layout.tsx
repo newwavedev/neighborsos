@@ -1,14 +1,8 @@
 'use client';
-import type { Metadata } from "next";
+
 import localFont from "next/font/local";
 import "./globals.css";
 
-
-
-export const metadata: Metadata = {
-  title: "NeighborSOS",
-  description: "Connecting urgent charity needs with local donors in real-time",
-};
 
 export default function RootLayout({
   children,
