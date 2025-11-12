@@ -11,8 +11,10 @@ export default function CharitiesPage() {
   const [charities, setCharities] = useState<any[]>([]);
   const [selectedCharity, setSelectedCharity] = useState<string>('');
   const [itemName, setItemName] = useState('');
-  const [urgencyHours, setUrgencyHours] = useState('24');
-  const [distance, setDistance] = useState('2.5');
+const [quantity, setQuantity] = useState('1');
+const [category, setCategory] = useState('');
+const [urgencyHours, setUrgencyHours] = useState('24');
+const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [myNeeds, setMyNeeds] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
@@ -88,22 +90,26 @@ export default function CharitiesPage() {
     setIsSubmitting(true);
 
     const { error } = await supabase
-      .from('urgent_needs')
-      .insert({
-        charity_id: selectedCharity,
-        item_name: itemName,
-        urgency_hours: parseInt(urgencyHours),
-        distance_miles: parseFloat(distance),
-        status: 'available'
-      });
+  .from('urgent_needs')
+  .insert({
+    charity_id: selectedCharity,
+    item_name: itemName,
+    quantity: parseInt(quantity),
+    category: category,
+    urgency_hours: parseInt(urgencyHours),
+    notes: notes,
+    status: 'available'
+  });
 
     if (error) {
       alert('Error adding item. Please try again.');
     } else {
       alert('Item added successfully!');
       setItemName('');
-      setUrgencyHours('24');
-      setDistance('2.5');
+setQuantity('1');
+setCategory('');
+setUrgencyHours('24');
+setNotes('');
       
       const { data } = await supabase
         .from('urgent_needs')
@@ -187,59 +193,94 @@ export default function CharitiesPage() {
               <h2 className="text-2xl font-serif text-[#3a3a3a] mb-4">Add New Urgent Need</h2>
               
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Item Needed *
-                  </label>
-                  <input
-                    type="text"
-                    value={itemName}
-                    onChange={(e) => setItemName(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="e.g., 10 Winter Coats (Adult sizes)"
-                    required
-                  />
-                </div>
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Item Needed *
+    </label>
+    <input
+      type="text"
+      value={itemName}
+      onChange={(e) => setItemName(e.target.value)}
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      placeholder="e.g., Winter Coats (Adult sizes)"
+      required
+    />
+  </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Urgency (hours)
-                    </label>
-                    <input
-                      type="number"
-                      value={urgencyHours}
-                      onChange={(e) => setUrgencyHours(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      min="1"
-                      max="168"
-                    />
-                  </div>
+  <div className="grid grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Quantity *
+      </label>
+      <input
+        type="number"
+        value={quantity}
+        onChange={(e) => setQuantity(e.target.value)}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        min="1"
+        required
+      />
+    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Distance (miles)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={distance}
-                      onChange={(e) => setDistance(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      min="0"
-                    />
-                  </div>
-                </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Category *
+      </label>
+      <select
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        required
+      >
+        <option value="">Select category</option>
+        <option value="clothing">Clothing</option>
+        <option value="food">Food</option>
+        <option value="household">Household Items</option>
+        <option value="vet">Vet Help</option>
+        <option value="misc">Miscellaneous</option>
+      </select>
+    </div>
+  </div>
 
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
-                  style={{backgroundColor: '#000080', color: 'white'}}
-                >
-                  {isSubmitting ? 'Adding...' : 'Add Urgent Need'}
-                </button>
-              </form>
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Urgency (hours) *
+    </label>
+    <input
+      type="number"
+      value={urgencyHours}
+      onChange={(e) => setUrgencyHours(e.target.value)}
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      min="1"
+      max="168"
+      required
+    />
+  </div>
+
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Additional Notes
+    </label>
+    <textarea
+      value={notes}
+      onChange={(e) => setNotes(e.target.value)}
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      placeholder="Any important details about the items..."
+      maxLength={150}
+      rows={3}
+    />
+    <p className="text-xs text-gray-500 mt-1">{notes.length}/150 characters</p>
+  </div>
+
+  <button
+    type="submit"
+    disabled={isSubmitting}
+    className="w-full py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
+    style={{backgroundColor: '#000080', color: 'white'}}
+  >
+    {isSubmitting ? 'Adding...' : 'Add Urgent Need'}
+  </button>
+</form>
             </div>
 
             <div className="bg-white rounded-lg shadow-lg p-6">
@@ -250,25 +291,33 @@ export default function CharitiesPage() {
               ) : (
                 <div className="space-y-3">
                   {myNeeds.map(need => (
-                    <div 
-                      key={need.id}
-                      className="border rounded-lg p-4 flex justify-between items-start"
-                      style={{borderColor: need.status === 'claimed' ? '#ADEBB3' : '#e5e4e2'}}
-                    >
-                      <div className="flex-1">
-                        <h3 className="font-medium text-[#3a3a3a]">{need.item_name}</h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {need.urgency_hours} hours · {need.distance_miles} miles · 
-                          <span className={need.status === 'claimed' ? 'text-green-600 font-medium' : 'text-gray-600'}>
-                            {' '}{need.status === 'claimed' ? 'CLAIMED' : 'Available'}
-                          </span>
-                        </p>
-                        {need.claimed_by_email && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Claimed by: {need.claimed_by_email}
-                          </p>
-                        )}
-                      </div>
+  <div 
+    key={need.id}
+    className="border rounded-lg p-4 flex justify-between items-start"
+    style={{borderColor: need.status === 'claimed' ? '#ADEBB3' : '#e5e4e2'}}
+  >
+    <div className="flex-1">
+      <div className="flex items-center gap-2 mb-1">
+        <h3 className="font-medium text-[#3a3a3a]">{need.item_name}</h3>
+        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full capitalize">
+          {need.category}
+        </span>
+      </div>
+      <p className="text-sm text-gray-500">
+        Qty: {need.quantity} · {need.urgency_hours} hours · 
+        <span className={need.status === 'claimed' ? 'text-green-600 font-medium' : 'text-gray-600'}>
+          {' '}{need.status === 'claimed' ? 'CLAIMED' : 'Available'}
+        </span>
+      </p>
+      {need.notes && (
+        <p className="text-xs text-gray-600 mt-2 italic bg-gray-50 p-2 rounded">"{need.notes}"</p>
+      )}
+      {need.claimed_by_email && (
+        <p className="text-xs text-gray-500 mt-2">
+          Claimed by: {need.claimed_by_email}
+        </p>
+      )}
+    </div>
                       
                       {need.status === 'available' && (
                         <button

@@ -63,24 +63,27 @@ useEffect(() => {
 
       // Fetch urgent needs with charity info
       const { data: needs } = await supabase
-        .from('urgent_needs')
-        .select(`
-          *,
-          charities (name)
-        `)
-        .eq('status', 'available')
-        .order('urgency_hours', { ascending: true });
-      
-      if (needs) {
-        const formattedNeeds = needs.map((need: any) => ({
-          id: need.id,
-          charity: need.charities.name,
-          item: need.item_name,
-          urgency: `${need.urgency_hours} hours`,
-          distance: `${need.distance_miles} miles`
-        }));
-        setCurrentNeeds(formattedNeeds);
-      }
+  .from('urgent_needs')
+  .select(`
+    *,
+    charities (name)
+  `)
+  .eq('status', 'available')
+  .order('urgency_hours', { ascending: true });
+
+if (needs) {
+  const formattedNeeds = needs.map((need: any) => ({
+    id: need.id,
+    charity: need.charities.name,
+    item: need.item_name,
+    quantity: need.quantity,
+    category: need.category,
+    urgency: `${need.urgency_hours} hours`,
+    distance: '2.5 miles', // Placeholder - we'll calculate real distance later
+    notes: need.notes
+  }));
+  setCurrentNeeds(formattedNeeds);
+}
     }
 
     fetchData();
@@ -109,20 +112,24 @@ useEffect(() => {
       
       // Refresh the needs list
       const { data: needs } = await supabase
-        .from('urgent_needs')
-        .select(`*, charities (name)`)
-        .eq('status', 'available')
-        .order('urgency_hours', { ascending: true });
-      
-      if (needs) {
-        const formattedNeeds = needs.map((need: any) => ({
-          id: need.id,
-          charity: need.charities.name,
-          item: need.item_name,
-          urgency: `${need.urgency_hours} hours`,
-          distance: `${need.distance_miles} miles`
-        }));
-        setCurrentNeeds(formattedNeeds);
+  .from('urgent_needs')
+  .select(`*, charities (name)`)
+  .eq('status', 'available')
+  .order('urgency_hours', { ascending: true });
+
+if (needs) {
+  const formattedNeeds = needs.map((need: any) => ({
+    id: need.id,
+    charity: need.charities.name,
+    item: need.item_name,
+    quantity: need.quantity,
+    category: need.category,
+    urgency: `${need.urgency_hours} hours`,
+    distance: '2.5 miles',
+    notes: need.notes
+  }));
+  setCurrentNeeds(formattedNeeds);
+
       }
       
       // Close modal
@@ -287,10 +294,27 @@ useEffect(() => {
             <h2 className="text-xl md:text-2xl font-serif text-[#3a3a3a] mb-4">Claim This Item</h2>
             
             <div className="mb-4 p-4 bg-blue-50 rounded">
-              <h3 className="font-semibold text-[#000080] mb-1">{selectedNeed.item}</h3>
-              <p className="text-sm text-gray-600">{selectedNeed.charity}</p>
-              <p className="text-xs text-gray-500 mt-2">{selectedNeed.distance} away · {selectedNeed.urgency} left</p>
-            </div>
+  <div className="flex items-center gap-2 mb-2">
+    <h3 className="font-semibold text-[#000080]">{selectedNeed.item}</h3>
+    {selectedNeed.category && (
+      <span className="text-xs bg-blue-200 text-blue-900 px-2 py-0.5 rounded-full capitalize">
+        {selectedNeed.category}
+      </span>
+    )}
+  </div>
+  <p className="text-sm text-gray-600 mb-2">{selectedNeed.charity}</p>
+  <div className="text-sm text-gray-700 space-y-1">
+    <p><span className="font-medium">Quantity needed:</span> {selectedNeed.quantity || 1}</p>
+    <p><span className="font-medium">Urgency:</span> {selectedNeed.urgency} left</p>
+    <p><span className="font-medium">Distance:</span> {selectedNeed.distance} away</p>
+  </div>
+  {selectedNeed.notes && (
+    <div className="mt-3 pt-3 border-t border-blue-200">
+      <p className="text-xs font-medium text-gray-700 mb-1">Additional Details:</p>
+      <p className="text-sm text-gray-600 italic">"{selectedNeed.notes}"</p>
+    </div>
+  )}
+</div>
 
             <div className="space-y-4 mb-6">
               <div>
