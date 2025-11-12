@@ -243,13 +243,13 @@ if (needs) {
               {/* Scrollable Needs List */}
               <div 
   ref={scrollRef}
-  className="h-[400px] md:h-[500px] overflow-y-scroll space-y-4 pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
-                style={{ 
-                  scrollBehavior: 'smooth',
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#8B8589 #e5e4e2'
-                }}
-              >
+  className="h-[400px] md:h-[500px] overflow-y-auto space-y-4 pr-2"
+  style={{ 
+    scrollBehavior: 'smooth',
+    overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch' // Better iOS scrolling
+  }}
+>
                 {currentNeeds.map((need) => (
                   <div 
                     key={need.id} 
