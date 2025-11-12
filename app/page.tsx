@@ -223,7 +223,7 @@ if (needs) {
           {/* RIGHT: Urgent Needs List (1/3 width) */}
           <div className="md:col-span-1 col-span-1">
             
-            <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-4 md:p-6 mx-4">
+            <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 border-t-4 border-[#000080]">
               
               {/* Header */}
               <div className="flex justify-between items-center mb-6 border-b pb-4" style={{borderColor: '#e5e4e2'}}>
@@ -243,11 +243,12 @@ if (needs) {
               {/* Scrollable Needs List */}
               <div 
   ref={scrollRef}
-  className="h-[400px] md:h-[500px] overflow-y-auto space-y-4 pr-2"
+  className="h-[400px] md:h-[500px] overflow-y-auto space-y-4 md:pr-2 -mx-4 px-4 md:mx-0 md:px-0"
   style={{ 
     scrollBehavior: 'smooth',
-    overflowY: 'auto',
-    WebkitOverflowScrolling: 'touch' // Better iOS scrolling
+    overflowY: 'scroll',
+    WebkitOverflowScrolling: 'touch',
+    touchAction: 'pan-y'
   }}
 >
                 {currentNeeds.map((need) => (
