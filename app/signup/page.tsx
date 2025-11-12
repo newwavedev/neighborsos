@@ -11,6 +11,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [address, setAddress] = useState('');
+  const [zipCode, setZipCode] = useState('');
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -54,6 +55,7 @@ const { error: charityError } = await supabase
     contact_email: contactEmail,
     address: address,
     phone: phone,
+    zip_code: zipCode,
     verified: false, // Admin needs to verify
     user_id: authData.user?.id,
   });
@@ -189,18 +191,33 @@ router.push('/login');
 />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address *
-            </label>
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="123 Main St, Minneapolis, MN 55401"
-              required
-            />
-          </div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Address *
+  </label>
+  <input
+    type="text"
+    value={address}
+    onChange={(e) => setAddress(e.target.value)}
+    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    placeholder="123 Main St, Minneapolis, MN 55401"
+    required
+  />
+</div>
+
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Zip Code *
+  </label>
+  <input
+    type="text"
+    value={zipCode}
+    onChange={(e) => setZipCode(e.target.value)}
+    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    placeholder="55401"
+    maxLength={5}
+    required
+  />
+</div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

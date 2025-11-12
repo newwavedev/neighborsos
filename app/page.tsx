@@ -16,9 +16,44 @@ export default function Home() {
   // State for claim modal
   const [selectedNeed, setSelectedNeed] = useState<any>(null);
   const [donorEmail, setDonorEmail] = useState('');
+  const [userZipCode, setUserZipCode] = useState('');
   const [donorName, setDonorName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Calculate distance between two zip codes using Haversine formula
+async function calculateDistance(zip1: string, zip2: string): Promise<number> {
+  try {
+    // Fetch coordinates for both zip codes from free API
+    const response1 = await fetch(`https://api.zippopotam.us/us/${zip1}`);
+    const response2 = await fetch(`https://api.zippopotam.us/us/${zip2}`);
+    
+    if (!response1.ok || !response2.ok) return 999; // Return large distance if zip not found
+    
+    const data1 = await response1.json();
+    const data2 = await response2.json();
+    
+    const lat1 = parseFloat(data1.places[0].latitude);
+    const lon1 = parseFloat(data1.places[0].longitude);
+    const lat2 = parseFloat(data2.places[0].latitude);
+    const lon2 = parseFloat(data2.places[0].longitude);
+    
+    // Haversine formula to calculate distance in miles
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+    
+    return Math.round(distance * 10) / 10; // Round to 1 decimal
+  } catch (error) {
+    console.error('Error calculating distance:', error);
+    return 999;
+  }
+}
   
   // Auto-scroll effect for urgent needs (desktop only)
 useEffect(() => {
@@ -150,6 +185,42 @@ if (needs) {
     }
   };
 
+async function handleSortByDistance() {
+  if (!userZipCode || userZipCode.length !== 5) {
+    alert('Please enter a valid 5-digit zip code');
+    return;
+  }
+
+  setIsScrolling(false); // Stop auto-scrolling while sorting
+
+  // Calculate distances for all needs
+  const needsWithDistance = await Promise.all(
+    currentNeeds.map(async (need) => {
+      // Fetch charity zip code from database
+      const { data: charity } = await supabase
+        .from('charities')
+        .select('zip_code')
+        .eq('name', need.charity)
+        .single();
+      
+      if (!charity || !charity.zip_code) {
+        return { ...need, calculatedDistance: 999 };
+      }
+
+      const distance = await calculateDistance(userZipCode, charity.zip_code);
+      return { 
+        ...need, 
+        calculatedDistance: distance,
+        distance: `${distance} miles`
+      };
+    })
+  );
+
+  // Sort by distance (closest first)
+  const sorted = needsWithDistance.sort((a, b) => a.calculatedDistance - b.calculatedDistance);
+  setCurrentNeeds(sorted);
+}
+
   return (
     <div className="min-h-screen bg-[#f5f4f2]">
       <div className="container mx-auto px-4 md:px-8 py-6 md:py-12">
@@ -226,18 +297,39 @@ if (needs) {
             <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 border-t-4 border-[#000080]">
               
               {/* Header */}
-              <div className="flex justify-between items-center mb-6 border-b pb-4" style={{borderColor: '#e5e4e2'}}>
-  <div>
+              <div className="mb-6 border-b pb-4" style={{borderColor: '#e5e4e2'}}>
+  <div className="flex justify-between items-center mb-3">
     <h2 className="text-lg md:text-xl font-serif text-[#3a3a3a]">Urgent Needs</h2>
-    <p className="text-xs md:hidden text-gray-500 mt-1">↓ Scroll to see more items</p>
+    <button 
+      onClick={() => setIsScrolling(!isScrolling)}
+      className="hidden md:block text-xs hover:text-[#000080] transition-colors uppercase tracking-wide"
+      style={{color: '#8B8589'}}
+    >
+      {isScrolling ? 'Pause' : 'Resume'}
+    </button>
   </div>
-  <button 
-    onClick={() => setIsScrolling(!isScrolling)}
-    className="hidden md:block text-xs hover:text-[#000080] transition-colors uppercase tracking-wide"
-    style={{color: '#8B8589'}}
-  >
-    {isScrolling ? 'Pause' : 'Resume'}
-  </button>
+  
+
+  
+  <div className="flex gap-2 items-center">
+    <input
+      type="text"
+      value={userZipCode}
+      onChange={(e) => setUserZipCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+      placeholder="Your zip code"
+      className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      maxLength={5}
+    />
+
+    
+    <button
+  onClick={handleSortByDistance}
+  className="px-4 py-2 text-sm bg-[#000080] text-white rounded-lg hover:opacity-90 transition-opacity"
+>
+  Sort by Distance
+</button>
+  </div>
+  <p className="text-xs md:hidden text-gray-500 mt-2">↓ Scroll to see more items</p>
 </div>
 
               {/* Scrollable Needs List */}
