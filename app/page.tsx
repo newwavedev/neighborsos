@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 
+
 export default function Home() {
   const [isScrolling, setIsScrolling] = useState(true);
   const [hoveredStory, setHoveredStory] = useState<number | null>(null);
@@ -19,6 +20,7 @@ export default function Home() {
   const [userZipCode, setUserZipCode] = useState('');
   const [donorName, setDonorName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [donorQuantity, setDonorQuantity] = useState(1);
 
   // Calculate distance between two zip codes using Haversine formula
 async function calculateDistance(zip1: string, zip2: string): Promise<number> {
@@ -101,7 +103,7 @@ useEffect(() => {
   .from('urgent_needs')
   .select(`
     *,
-    charities (name)
+    charities (name, zip_code)
   `)
   .eq('status', 'available')
   .order('urgency_hours', { ascending: true });
@@ -110,11 +112,13 @@ if (needs) {
   const formattedNeeds = needs.map((need: any) => ({
     id: need.id,
     charity: need.charities.name,
+    charityId: need.charity_id,
+    charityZipCode: need.charities.zip_code,
     item: need.item_name,
     quantity: need.quantity,
     category: need.category,
     urgency: `${need.urgency_hours} hours`,
-    distance: '2.5 miles', // Placeholder - we'll calculate real distance later
+    distance: '-- miles',
     notes: need.notes
   }));
   setCurrentNeeds(formattedNeeds);
@@ -125,56 +129,159 @@ if (needs) {
   }, []);
 
   async function handleClaimItem() {
-    if (!donorEmail || !donorName || !selectedNeed) return;
-    setIsScrolling(false);  // ADD THIS LINE - stops scrolling when claiming
-
-    setIsSubmitting(true);
-    
-    // Update the item status in database
-    const { error } = await supabase
-      .from('urgent_needs')
-      .update({ 
-        status: 'claimed',
-        claimed_at: new Date().toISOString(),
-        claimed_by_email: donorEmail
-      })
-      .eq('id', selectedNeed.id);
-    
-    if (error) {
-      alert('Error claiming item. Please try again.');
-    } else {
-      alert(`Thank you ${donorName}! You've committed to helping with: ${selectedNeed.item}. The charity will contact you at ${donorEmail} within 24 hours.`);
-      
-      // Refresh the needs list
-      const { data: needs } = await supabase
-  .from('urgent_needs')
-  .select(`*, charities (name)`)
-  .eq('status', 'available')
-  .order('urgency_hours', { ascending: true });
-
-if (needs) {
-  const formattedNeeds = needs.map((need: any) => ({
-    id: need.id,
-    charity: need.charities.name,
-    item: need.item_name,
-    quantity: need.quantity,
-    category: need.category,
-    urgency: `${need.urgency_hours} hours`,
-    distance: '2.5 miles',
-    notes: need.notes
-  }));
-  setCurrentNeeds(formattedNeeds);
-
-      }
-      
-      // Close modal
-      setSelectedNeed(null);
-      setDonorEmail('');
-      setDonorName('');
-    }
-    
-    setIsSubmitting(false);
+  if (!donorEmail || !donorName || !selectedNeed) return;
+  
+  setIsScrolling(false);
+  setIsSubmitting(true);
+  
+  // Get charity details including auto-response message
+  const { data: charity } = await supabase
+    .from('charities')
+    .select('auto_response_message, contact_email, name')
+    .eq('id', selectedNeed.charityId)
+    .single();
+  
+  // Calculate new quantity
+  const newQuantity = selectedNeed.quantity - donorQuantity;
+  const isFullyFulfilled = newQuantity <= 0;
+  
+  // Update the item in database
+  const updateData: any = {
+    quantity: Math.max(0, newQuantity)
+  };
+  
+  // If fully fulfilled, mark as claimed
+  if (isFullyFulfilled) {
+    updateData.status = 'claimed';
+    updateData.claimed_at = new Date().toISOString();
+    updateData.claimed_by_email = donorEmail;
   }
+  
+  const { error } = await supabase
+    .from('urgent_needs')
+    .update(updateData)
+    .eq('id', selectedNeed.id);
+  
+  if (error) {
+    alert('Error claiming item. Please try again.');
+    setIsSubmitting(false);
+    return;
+  }
+  
+  // Send email to donor with charity's auto-response
+  await fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: donorEmail,
+      subject: `Thank you for helping ${charity?.name || selectedNeed.charity}!`,
+      html: `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <h2 style="color: #000080;">Thank you for your generous donation, ${donorName}!</h2>
+    
+    <div style="background-color: #e8f4f8; border: 3px solid #000080; border-radius: 10px; padding: 20px; margin: 25px 0; text-align: center;">
+  <p style="font-size: 18px; margin: 0 0 10px 0; color: #333;">You've committed to donating:</p>
+  <p style="font-size: 28px; font-weight: bold; color: #000080; margin: 0;">
+    ${donorQuantity} ${selectedNeed.item}
+  </p>
+</div>
+${donorQuantity < selectedNeed.quantity ? `<p style="font-size: 14px; color: #666; text-align: center; margin: -15px 0 20px 0;">(${donorQuantity} of ${selectedNeed.quantity} total needed)</p>` : ''}
+    
+    <div style="background-color: #f0f7ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="color: #000080; margin-top: 0;">Next Steps from ${charity?.name || selectedNeed.charity}:</h3>
+      <p style="line-height: 1.6;">
+        ${(charity?.auto_response_message || 'The charity will contact you within 24 hours with delivery instructions.').replace(/\n/g, '<br>')}
+      </p>
+    </div>
+    
+    <p style="font-size: 14px; color: #666; border-top: 1px solid #ddd; padding-top: 15px; margin-top: 20px;">
+      Questions? Contact the charity directly at: <a href="mailto:${charity?.contact_email}" style="color: #000080;">${charity?.contact_email}</a>
+    </p>
+    
+    <p>Thank you for making a difference in your community!</p>
+    <p style="color: #666;">- The NeighborSOS Team<br>
+    <a href="https://neighborsos.org" style="color: #000080;">neighborsos.org</a></p>
+    
+    <p style="font-size: 11px; color: #999; margin-top: 30px;">
+      You received this email because you claimed an item on NeighborSOS.org. This is a transactional email related to your donation commitment.
+    </p>
+  </div>
+
+      `
+    })
+  });
+  
+  // Send notification email to charity
+  await fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: charity?.contact_email,
+      subject: `${isFullyFulfilled ? 'Item Fully Claimed' : 'Partial Donation Received'}: ${selectedNeed.item}`,
+      html: `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <h2>${isFullyFulfilled ? '🎉 Great news! Your need is fully fulfilled.' : '✅ Good news! Someone is donating!'}</h2>
+    
+    <div style="background-color: #fff3e6; border: 3px solid #FF8559; border-radius: 10px; padding: 20px; margin: 25px 0;">
+      <p style="font-size: 16px; margin: 0 0 10px 0; color: #666;">A donor is providing:</p>
+      <p style="font-size: 24px; font-weight: bold; color: #FF8559; margin: 10px 0;">
+        ${donorQuantity} ${selectedNeed.item}
+      </p>
+      ${!isFullyFulfilled ? `<p style="font-size: 14px; color: #666; margin: 10px 0;">Still needed: ${newQuantity} more</p>` : `<p style="font-size: 14px; color: green; font-weight: bold; margin: 10px 0;">✓ This need is now fully met!</p>`}
+      <p style="font-size: 14px; color: #666; margin: 5px 0;"><strong>Category:</strong> ${selectedNeed.category}</p>
+    </div>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+          <h3>Donor Information:</h3>
+          <ul>
+            <li><strong>Name:</strong> ${donorName}</li>
+            <li><strong>Email:</strong> ${donorEmail}</li>
+          </ul>
+          <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #FF8559; margin: 15px 0;">
+            <strong>Your auto-response has been sent to the donor.</strong> They have your delivery/drop-off instructions. You may also reach out directly if needed.
+          </div>
+          ${!isFullyFulfilled ? '<p style="color: #000080; font-weight: bold;">This item is still active on NeighborSOS with the updated quantity.</p>' : '<p style="color: green; font-weight: bold;">This item has been removed from the active needs list.</p>'}
+          <p>- NeighborSOS</p>
+        </div>
+      `
+    })
+  });
+  
+  const fulfilledMsg = isFullyFulfilled 
+  ? `This need is now fully fulfilled!` 
+  : `${newQuantity} more still needed.`;
+
+alert(`Thank you ${donorName}!\n\nYou've committed to donating:\n${donorQuantity} ${selectedNeed.item}\n\n${fulfilledMsg}\n\nCheck your email (${donorEmail}) for delivery instructions from ${charity?.name}.\n\n⚠️ If you don't see the email, please check your SPAM or Promotions folder.`);
+  
+  // Refresh the needs list
+  const { data: needs } = await supabase
+    .from('urgent_needs')
+    .select(`*, charities (name, zip_code)`)
+    .eq('status', 'available')
+    .order('urgency_hours', { ascending: true });
+  
+  if (needs) {
+    const formattedNeeds = needs.map((need: any) => ({
+      id: need.id,
+      charity: need.charities.name,
+      charityId: need.charity_id,
+      charityZipCode: need.charities.zip_code,
+      item: need.item_name,
+      quantity: need.quantity,
+      category: need.category,
+      urgency: `${need.urgency_hours} hours`,
+      distance: '-- miles',
+      notes: need.notes
+    }));
+    setCurrentNeeds(formattedNeeds);
+  }
+  
+  // Close modal and reset
+  setSelectedNeed(null);
+  setDonorEmail('');
+  setDonorName('');
+  setDonorQuantity(1);
+  setIsSubmitting(false);
+}
 
   const getAccentColor = (accent: string) => {
     switch(accent) {
@@ -191,23 +298,28 @@ async function handleSortByDistance() {
     return;
   }
 
-  setIsScrolling(false); // Stop auto-scrolling while sorting
+  setIsScrolling(false);
 
-  // Calculate distances for all needs
   const needsWithDistance = await Promise.all(
-    currentNeeds.map(async (need) => {
-      // Fetch charity zip code from database
-      const { data: charity } = await supabase
-        .from('charities')
-        .select('zip_code')
-        .eq('name', need.charity)
-        .single();
+    currentNeeds.map(async (need: any) => {
+      // Use stored charityZipCode if available, otherwise fetch from database
+      let charityZip = need.charityZipCode;
       
-      if (!charity || !charity.zip_code) {
-        return { ...need, calculatedDistance: 999 };
+      if (!charityZip) {
+        const { data: charity } = await supabase
+          .from('charities')
+          .select('zip_code')
+          .eq('name', need.charity)
+          .single();
+        
+        charityZip = charity?.zip_code;
+      }
+      
+      if (!charityZip) {
+        return { ...need, calculatedDistance: 999, distance: '-- miles' };
       }
 
-      const distance = await calculateDistance(userZipCode, charity.zip_code);
+      const distance = await calculateDistance(userZipCode, charityZip);
       return { 
         ...need, 
         calculatedDistance: distance,
@@ -216,9 +328,38 @@ async function handleSortByDistance() {
     })
   );
 
-  // Sort by distance (closest first)
   const sorted = needsWithDistance.sort((a, b) => a.calculatedDistance - b.calculatedDistance);
   setCurrentNeeds(sorted);
+}
+
+async function handleSortByUrgency() {
+  setIsScrolling(false);
+  
+  // Re-fetch needs sorted by urgency
+  const { data: needs } = await supabase
+    .from('urgent_needs')
+    .select(`
+      *,
+      charities (name, zip_code)
+    `)
+    .eq('status', 'available')
+    .order('urgency_hours', { ascending: true });
+
+  if (needs) {
+    const formattedNeeds = needs.map((need: any) => ({
+      id: need.id,
+      charity: need.charities.name,
+      charityZipCode: need.charities.zip_code, // Store for later distance calc
+      item: need.item_name,
+      quantity: need.quantity,
+      category: need.category,
+      urgency: `${need.urgency_hours} hours`,
+      distance: '-- miles', // Default placeholder
+      notes: need.notes
+    }));
+    setCurrentNeeds(formattedNeeds);
+  }
+
 }
 
   return (
@@ -309,26 +450,32 @@ async function handleSortByDistance() {
     </button>
   </div>
   
-
-  
-  <div className="flex gap-2 items-center">
-    <input
-      type="text"
-      value={userZipCode}
-      onChange={(e) => setUserZipCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
-      placeholder="Your zip code"
-      className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      maxLength={5}
-    />
-
+  <div className="space-y-2">
+    <div className="flex gap-2 items-center">
+      <input
+        type="text"
+        value={userZipCode}
+        onChange={(e) => setUserZipCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+        placeholder="Your zip code"
+        className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        maxLength={5}
+      />
+      <button
+        onClick={handleSortByDistance}
+        className="px-3 py-1.5 text-xs bg-[#000080] text-white rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap"
+      >
+        Sort by Distance
+      </button>
+    </div>
     
     <button
-  onClick={handleSortByDistance}
-  className="px-4 py-2 text-sm bg-[#000080] text-white rounded-lg hover:opacity-90 transition-opacity"
->
-  Sort by Distance
-</button>
+      onClick={handleSortByUrgency}
+      className="w-full px-3 py-1.5 text-xs bg-[#FF8559] text-white rounded-lg hover:opacity-90 transition-opacity"
+    >
+      Sort by Urgency
+    </button>
   </div>
+  
   <p className="text-xs md:hidden text-gray-500 mt-2">↓ Scroll to see more items</p>
 </div>
 
@@ -361,9 +508,10 @@ async function handleSortByDistance() {
                       </div>
                       <button 
                         onClick={() => {
-                          setSelectedNeed(need);
-                          setIsScrolling(false);
-                        }}
+  setSelectedNeed(need);
+  setDonorQuantity(1);
+  setIsScrolling(false);
+}}
                         className="font-medium transition-colors text-xs px-3 py-1 rounded hover:opacity-90"
                         style={{backgroundColor: '#FF8559', color: 'white'}}
                       >
@@ -397,7 +545,7 @@ async function handleSortByDistance() {
   </div>
   <p className="text-sm text-gray-600 mb-2">{selectedNeed.charity}</p>
   <div className="text-sm text-gray-700 space-y-1">
-    <p><span className="font-medium">Quantity needed:</span> {selectedNeed.quantity || 1}</p>
+    <p><span className="font-medium">Quantity still needed:</span> {selectedNeed.quantity || 1}</p>
     <p><span className="font-medium">Urgency:</span> {selectedNeed.urgency} left</p>
     <p><span className="font-medium">Distance:</span> {selectedNeed.distance} away</p>
   </div>
@@ -407,6 +555,39 @@ async function handleSortByDistance() {
       <p className="text-sm text-gray-600 italic">"{selectedNeed.notes}"</p>
     </div>
   )}
+</div>
+
+{/* Quantity Selection */}
+<div className="mb-4">
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    How many can you donate?
+  </label>
+  <div className="flex items-center gap-3">
+    <button
+      onClick={() => setDonorQuantity(Math.max(1, donorQuantity - 1))}
+      className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-xl"
+    >
+      −
+    </button>
+    <input
+      type="number"
+      value={donorQuantity}
+      onChange={(e) => {
+        const val = parseInt(e.target.value) || 1;
+        setDonorQuantity(Math.min(Math.max(1, val), selectedNeed.quantity));
+      }}
+      min="1"
+      max={selectedNeed.quantity}
+      className="w-20 text-center px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    />
+    <button
+      onClick={() => setDonorQuantity(Math.min(selectedNeed.quantity, donorQuantity + 1))}
+      className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-xl"
+    >
+      +
+    </button>
+    <span className="text-sm text-gray-500">of {selectedNeed.quantity} needed</span>
+  </div>
 </div>
 
             <div className="space-y-4 mb-6">

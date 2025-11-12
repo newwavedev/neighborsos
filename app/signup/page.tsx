@@ -16,6 +16,7 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const [autoResponseMessage, setAutoResponseMessage] = useState('');
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
@@ -56,7 +57,8 @@ const { error: charityError } = await supabase
     address: address,
     phone: phone,
     zip_code: zipCode,
-    verified: false, // Admin needs to verify
+    auto_response_message: autoResponseMessage,
+    verified: false,
     user_id: authData.user?.id,
   });
 
@@ -249,6 +251,23 @@ router.push('/login');
               required
             />
           </div>
+          <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Auto-Response Message for Donors *
+  </label>
+  <textarea
+    value={autoResponseMessage}
+    onChange={(e) => setAutoResponseMessage(e.target.value)}
+    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    placeholder="Thank you for your donation! Please drop off items at our office at 123 Main St, or ship to the same address. Office hours: Mon-Fri 9am-5pm. Questions? Call (555) 123-4567."
+    rows={5}
+    maxLength={500}
+    required
+  />
+  <p className="text-xs text-gray-500 mt-1">
+    This message will be automatically sent to donors when they claim an item. Include your drop-off address, shipping address, hours, and contact info. ({autoResponseMessage.length}/500 characters)
+  </p>
+</div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-gray-700">
   <p className="font-medium mb-1">Verification Process:</p>
