@@ -123,10 +123,10 @@ export default function AboutPage() {
               
               <p className="text-lg leading-relaxed">
                 The turning point came when a friend made a simple plea on social media to help a neighbor in need. 
-                The response was overwhelming: <span className="font-semibold">12 boxes of mac and cheese</span> and 
-                <span className="font-semibold"> 5 boxes of cereal</span> arrived—all from people who had been shopping 
+                The response was overwhelming: <span className="font-semibold">yet she ended up with an overabundance of boxes of mac and cheese</span> and 
+                <span className="font-semibold"> and boxes of cereal</span> from people who had been shopping 
                 the sales and wanted to share. That moment revealed the truth: people want to help, they just need to 
-                know where and when.
+                know what, where and when.
               </p>
               
               <p className="text-lg leading-relaxed">
