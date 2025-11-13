@@ -11,6 +11,9 @@ export default function AdoptAFamilyPage() {
   const [donationAmount, setDonationAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sponsorshipType, setSponsorshipType] = useState<'partial' | 'split'>('partial');
+  const [friendEmails, setFriendEmails] = useState<string[]>(['']);
+  const [splitMessage, setSplitMessage] = useState('');
 
   useEffect(() => {
     fetchFamilies();
@@ -73,7 +76,6 @@ export default function AdoptAFamilyPage() {
       return;
     }
 
-    // Send email to donor with holiday-specific template
     const deadlineDate = new Date(selectedFamily.urgency_date).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -181,7 +183,6 @@ export default function AdoptAFamilyPage() {
       })
     });
 
-    // Send email to charity
     await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -217,6 +218,78 @@ export default function AdoptAFamilyPage() {
       })
     });
 
+    // If split sponsorship, send invite emails to friends
+    if (sponsorshipType === 'split' && friendEmails.length > 0) {
+      const validFriendEmails = friendEmails.filter(email => email && email.includes('@'));
+      
+      for (const friendEmail of validFriendEmails) {
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: friendEmail,
+            subject: `${donorName} invited you to co-sponsor ${selectedFamily.family_name}! ✨`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 10px;">
+                
+                <div style="text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
+                  <h1 style="color: #ffffff; font-size: 28px; margin: 0;">You're Invited! ✨</h1>
+                  <p style="color: #ffffff; font-size: 16px; margin: 10px 0;">Help sponsor a family for the holidays</p>
+                </div>
+                
+                <p style="font-size: 16px; color: #2d3436; line-height: 1.6;">
+                  Hi there!
+                </p>
+                
+                <p style="font-size: 16px; color: #2d3436; line-height: 1.6;">
+                  <strong>${donorName}</strong> is sponsoring <strong>${selectedFamily.family_name}</strong> (a family of ${selectedFamily.family_size}) this holiday season and invited you to join!
+                </p>
+                
+                ${splitMessage ? `
+                  <div style="background-color: #f0f7ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+                    <p style="font-style: italic; color: #2d3436; margin: 0; font-size: 15px;">
+                      "${splitMessage}"
+                    </p>
+                  </div>
+                ` : ''}
+                
+                <div style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); border-radius: 10px; padding: 20px; margin: 25px 0;">
+                  <h3 style="margin-top: 0; color: #2d3436;">Family Details:</h3>
+                  <p style="margin: 5px 0; color: #2d3436;"><strong>Family Size:</strong> ${selectedFamily.family_size} people</p>
+                  <p style="margin: 5px 0; color: #2d3436;"><strong>Total Cost:</strong> $${selectedFamily.estimated_cost}</p>
+                  <p style="margin: 5px 0; color: #2d3436;"><strong>Already Committed:</strong> $${newTotal} (including ${donorName}'s $${amount})</p>
+                  <p style="margin: 5px 0; color: #667eea; font-weight: bold;"><strong>Still Needed:</strong> $${Math.max(0, selectedFamily.estimated_cost - newTotal)}</p>
+                </div>
+                
+                <div style="background-color: #fff3e6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                  <h4 style="margin-top: 0; color: #2d3436;">What they need:</h4>
+                  <p style="color: #2d3436; margin: 0; font-size: 14px;">${selectedFamily.specific_needs}</p>
+                </div>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="https://neighborsos.org/adopt-a-family" 
+                     style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                    View Family & Contribute
+                  </a>
+                </div>
+                
+                <p style="font-size: 14px; color: #636e72; text-align: center; margin-top: 30px;">
+                  Any amount helps! Join ${donorName} in making the holidays special for this family.
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 30px 0;">
+                
+                <p style="font-size: 12px; color: #999; text-align: center;">
+                  You received this invitation from ${donorName} via NeighborSOS<br>
+                  <a href="https://neighborsos.org" style="color: #667eea; text-decoration: none;">neighborsos.org</a>
+                </p>
+              </div>
+            `
+          })
+        });
+      }
+    }
+
     alert(`Thank you ${donorName}! You've committed $${amount} to help ${selectedFamily.family_name}.\n\nCheck your email (${donorEmail}) for next steps and the deadline.\n\n⚠️ Check your SPAM folder if you don't see it.`);
 
     await fetchFamilies();
@@ -224,6 +297,9 @@ export default function AdoptAFamilyPage() {
     setDonorName('');
     setDonorEmail('');
     setDonationAmount('');
+    setSponsorshipType('partial');
+    setFriendEmails(['']);
+    setSplitMessage('');
     setIsSubmitting(false);
   }
 
@@ -246,7 +322,6 @@ export default function AdoptAFamilyPage() {
     <div className="min-h-screen bg-[#f5f4f2]">
       <div className="container mx-auto px-4 py-12 max-w-6xl">
         
-        {/* Modern Header */}
         <div className="text-center mb-12">
           <div className="inline-block mb-4 px-6 py-2 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-full">
             <span className="text-white font-semibold text-sm uppercase tracking-wide">Holiday Season Program</span>
@@ -262,7 +337,6 @@ export default function AdoptAFamilyPage() {
           </p>
         </div>
 
-        {/* Info Box */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
           <h2 className="text-2xl font-serif text-[#2d3436] mb-6 text-center">How It Works</h2>
           <div className="grid md:grid-cols-3 gap-6 text-gray-700">
@@ -290,7 +364,6 @@ export default function AdoptAFamilyPage() {
           </div>
         </div>
 
-        {/* Families Grid */}
         {families.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
             <p className="text-2xl text-gray-600 mb-4">✨ No families currently need sponsorship</p>
@@ -307,7 +380,6 @@ export default function AdoptAFamilyPage() {
                   key={family.id}
                   className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]"
                 >
-                  {/* String of Lights Banner */}
                   <div className="h-8 relative overflow-hidden" style={{
                     background: 'linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%)'
                   }}>
@@ -353,7 +425,6 @@ export default function AdoptAFamilyPage() {
                         animationDelay: '1.4s'
                       }}></div>
                     </div>
-                    {/* Wire connecting lights */}
                     <svg className="absolute inset-0 w-full h-full" style={{top: '14px'}}>
                       <path d="M 0,0 Q 12.5,8 25,0 T 50,0 T 75,0 T 100,0" 
                         stroke="#636e72" 
@@ -366,7 +437,6 @@ export default function AdoptAFamilyPage() {
                   </div>
                   
                   <div className="p-6 bg-white">
-                    {/* Family Name */}
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-2xl font-serif text-[#2d3436] font-bold">
                         {family.family_name}
@@ -374,7 +444,6 @@ export default function AdoptAFamilyPage() {
                       <span className="text-3xl">✨</span>
                     </div>
 
-                    {/* Family Details */}
                     <div className="space-y-2 mb-4 text-gray-700">
                       <p className="flex items-center gap-2">
                         <span className="font-semibold">👨‍👩‍👧‍👦 Family Size:</span> {family.family_size}
@@ -391,20 +460,17 @@ export default function AdoptAFamilyPage() {
                       </p>
                     </div>
 
-                    {/* Story */}
                     {family.story && (
                       <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-3 mb-4">
                         <p className="text-sm text-gray-700 italic">"{family.story}"</p>
                       </div>
                     )}
 
-                    {/* Specific Needs */}
                     <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-3 mb-4 border-l-4 border-[#fdcb6e]">
                       <p className="text-sm font-semibold text-gray-800 mb-1">What they need:</p>
                       <p className="text-sm text-gray-700">{family.specific_needs}</p>
                     </div>
 
-                    {/* Progress Bar */}
                     <div className="mb-4">
                       <div className="flex justify-between text-sm mb-2">
                         <span className="font-semibold" style={{color: getStatusColor(family)}}>
@@ -425,12 +491,10 @@ export default function AdoptAFamilyPage() {
                       </div>
                     </div>
 
-                    {/* Charity Info */}
                     <p className="text-xs text-gray-500 mb-4">
                       Through: {family.charities.name}
                     </p>
 
-                    {/* Sponsor Button */}
                     <button
                       onClick={() => {
                         setSelectedFamily(family);
@@ -454,7 +518,6 @@ export default function AdoptAFamilyPage() {
 
       </div>
 
-      {/* Adoption Modal */}
       {selectedFamily && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
@@ -508,21 +571,154 @@ export default function AdoptAFamilyPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Your Contribution Amount ($) *
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Choose Your Sponsorship Option
                 </label>
-                <input
-                  type="number"
-                  value={donationAmount}
-                  onChange={(e) => setDonationAmount(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="100"
-                  min="1"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  You can contribute any amount - split with friends or sponsor fully!
-                </p>
+                
+                <div className="space-y-3 mb-4">
+                  
+                  <div className="border-2 border-gray-300 rounded-lg p-4 hover:border-purple-500 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="radio"
+                        id="partial"
+                        name="sponsorshipType"
+                        checked={sponsorshipType === 'partial'}
+                        onChange={() => setSponsorshipType('partial')}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <label htmlFor="partial" className="font-semibold text-gray-800 cursor-pointer">
+                          Option 1: Sponsor a Portion
+                        </label>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Contribute any amount. The family stays available for other donors to add to.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {sponsorshipType === 'partial' && (
+                      <div className="mt-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Your Contribution Amount ($) *
+                        </label>
+                        <input
+                          type="number"
+                          value={donationAmount}
+                          onChange={(e) => setDonationAmount(e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          placeholder="50"
+                          min="1"
+                          max={Math.max(0, selectedFamily.estimated_cost - selectedFamily.amount_committed)}
+                          required
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Any amount helps! Remaining needed: ${Math.max(0, selectedFamily.estimated_cost - selectedFamily.amount_committed)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-2 border-gray-300 rounded-lg p-4 hover:border-purple-500 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="radio"
+                        id="split"
+                        name="sponsorshipType"
+                        checked={sponsorshipType === 'split'}
+                        onChange={() => setSponsorshipType('split')}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <label htmlFor="split" className="font-semibold text-gray-800 cursor-pointer">
+                          Option 2: Split with Friends/Family
+                        </label>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Invite specific people to co-sponsor. The family card stays active until fully funded by your group.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {sponsorshipType === 'split' && (
+                      <div className="mt-3 space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Your Contribution Amount ($) *
+                          </label>
+                          <input
+                            type="number"
+                            value={donationAmount}
+                            onChange={(e) => setDonationAmount(e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="100"
+                            min="1"
+                            max={Math.max(0, selectedFamily.estimated_cost - selectedFamily.amount_committed)}
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Invite Friends/Family (Email Addresses)
+                          </label>
+                          {friendEmails.map((email, index) => (
+                            <div key={index} className="flex gap-2 mb-2">
+                              <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => {
+                                  const updated = [...friendEmails];
+                                  updated[index] = e.target.value;
+                                  setFriendEmails(updated);
+                                }}
+                                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="friend@example.com"
+                              />
+                              {friendEmails.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setFriendEmails(friendEmails.filter((_, i) => i !== index));
+                                  }}
+                                  className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => setFriendEmails([...friendEmails, ''])}
+                            className="text-sm text-purple-600 hover:text-purple-800 font-medium"
+                          >
+                            + Add Another Person
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Personal Message (Optional)
+                          </label>
+                          <textarea
+                            value={splitMessage}
+                            onChange={(e) => setSplitMessage(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            rows={2}
+                            placeholder="Hey! I'm sponsoring this family and thought you might want to join me..."
+                            maxLength={200}
+                          />
+                          <p className="text-xs text-gray-500 mt-1">{splitMessage.length}/200 characters</p>
+                        </div>
+
+                        <div className="bg-blue-50 p-3 rounded text-xs text-gray-700">
+                          <strong>How it works:</strong> You'll commit your amount now. Your friends will receive an email with a link to sponsor this same family. The family remains active until fully funded.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
               </div>
 
               <div className="bg-blue-50 p-3 rounded-lg text-xs text-gray-600">
@@ -537,6 +733,9 @@ export default function AdoptAFamilyPage() {
                   setDonorEmail('');
                   setDonorName('');
                   setDonationAmount('');
+                  setSponsorshipType('partial');
+                  setFriendEmails(['']);
+                  setSplitMessage('');
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
