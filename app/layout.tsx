@@ -127,7 +127,7 @@ export default function RootLayout({
                   </a>
                   
                   <a 
-                    href="https://instagram.com/YOUR_HANDLE" 
+                    href="https://instagram.com/neighborsosmn" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
