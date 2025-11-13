@@ -410,27 +410,32 @@ async function handleSortByUrgency() {
             </div>
           </div>
           
-          <div className="px-6 py-3 flex items-center justify-between bg-white/40 backdrop-blur-sm rounded-b-lg">
-            <div className="flex items-center gap-4">
-              <div className="px-3 py-1 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-full">
-                <span className="text-white font-semibold text-xs uppercase tracking-wide">New This Season</span>
-              </div>
-              
-              <h2 className="text-lg md:text-xl font-serif text-[#2d3436]">
-                ✨ Sponsor a Family for the Holidays
-              </h2>
-              
-              <p className="hidden md:block text-sm text-gray-600">
-                Make the season special for local families in need
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-white text-sm hover:opacity-90 transition-all"
-              style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
-              <span className="hidden sm:inline">Browse Families</span>
-              <span className="text-lg">→</span>
-            </div>
-          </div>
+          <div className="px-4 py-3 md:px-6 md:py-3" style={{
+  background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)'
+}}>
+  <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+    <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full md:w-auto">
+      <div className="px-3 py-1 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-full flex items-center justify-center">
+        <span className="text-white font-semibold text-xs uppercase tracking-wide text-center">New This Season</span>
+      </div>
+      
+      <h2 className="text-base md:text-lg lg:text-xl font-serif text-[#2d3436] text-center md:text-left">
+        ✨ Sponsor a Family for the Holidays
+      </h2>
+      
+      <p className="hidden lg:block text-sm text-gray-600">
+        Make the season special for local families in need
+      </p>
+    </div>
+    
+    <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-white text-sm hover:opacity-90 transition-all w-full md:w-auto"
+      style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
+      <span className="hidden sm:inline">Browse Families</span>
+      <span className="sm:hidden">Browse</span>
+      <span className="text-lg">→</span>
+    </div>
+  </div>
+</div>
         </a>
       </div>
     </div>
