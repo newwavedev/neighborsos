@@ -363,8 +363,89 @@ async function handleSortByUrgency() {
 }
 
   return (
-    <div className="min-h-screen bg-[#f5f4f2]">
-      <div className="container mx-auto px-4 md:px-8 py-6 md:py-12">
+  <div className="min-h-screen bg-[#f5f4f2]">
+    
+    {/* Holiday Families Banner - Slim banner at the very top */}
+    <div className="w-full bg-[#f5f4f2] border-b border-gray-200">
+      <div className="max-w-6xl mx-auto">
+        <a 
+          href="/adopt-a-family"
+          className="block hover:bg-white/50 transition-all duration-300 rounded-lg"
+        >
+          {/* String of Lights on Banner */}
+          <div className="h-6 relative overflow-hidden rounded-t-lg" style={{
+            background: 'linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%)'
+          }}>
+            <div className="absolute inset-0 flex items-center justify-around px-4">
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{
+                background: 'radial-gradient(circle, #667eea 0%, #764ba2 100%)',
+                boxShadow: '0 0 8px rgba(102, 126, 234, 0.6)',
+                animationDelay: '0s'
+              }}></div>
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{
+                background: 'radial-gradient(circle, #fdcb6e 0%, #e17055 100%)',
+                boxShadow: '0 0 8px rgba(253, 203, 110, 0.6)',
+                animationDelay: '0.2s'
+              }}></div>
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{
+                background: 'radial-gradient(circle, #00b894 0%, #00cec9 100%)',
+                boxShadow: '0 0 8px rgba(0, 184, 148, 0.6)',
+                animationDelay: '0.4s'
+              }}></div>
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{
+                background: 'radial-gradient(circle, #ff7675 0%, #d63031 100%)',
+                boxShadow: '0 0 8px rgba(255, 118, 117, 0.6)',
+                animationDelay: '0.6s'
+              }}></div>
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{
+                background: 'radial-gradient(circle, #a29bfe 0%, #6c5ce7 100%)',
+                boxShadow: '0 0 8px rgba(162, 155, 254, 0.6)',
+                animationDelay: '0.8s'
+              }}></div>
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{
+                background: 'radial-gradient(circle, #fd79a8 0%, #e84393 100%)',
+                boxShadow: '0 0 8px rgba(253, 121, 168, 0.6)',
+                animationDelay: '1s'
+              }}></div>
+            </div>
+          </div>
+          
+          <div className="px-6 py-3 flex items-center justify-between bg-white/40 backdrop-blur-sm rounded-b-lg">
+            <div className="flex items-center gap-4">
+              <div className="px-3 py-1 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-full">
+                <span className="text-white font-semibold text-xs uppercase tracking-wide">New This Season</span>
+              </div>
+              
+              <h2 className="text-lg md:text-xl font-serif text-[#2d3436]">
+                ✨ Sponsor a Family for the Holidays
+              </h2>
+              
+              <p className="hidden md:block text-sm text-gray-600">
+                Make the season special for local families in need
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-white text-sm hover:opacity-90 transition-all"
+              style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
+              <span className="hidden sm:inline">Browse Families</span>
+              <span className="text-lg">→</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    {/* Hero Section - REDUCED PADDING */}
+    <div className="text-center py-8 px-4" style={{backgroundColor: '#f5f4f2'}}>
+      <h1 className="text-4xl md:text-6xl font-serif mb-4" style={{color: '#3a3a3a'}}>
+        NeighborSOS
+      </h1>
+      <p className="text-lg md:text-xl mb-2" style={{color: '#8B8589'}}>
+        Connecting neighbors in need with neighbors who care
+      </p>
+    </div>
+
+    <div className="container mx-auto px-4 md:px-8 py-2 md:py-6">
         
         {/* Header with Navy accent */}
         <div className="mb-6 md:mb-12 border-l-4 border-[#000080] pl-3 md:pl-6">

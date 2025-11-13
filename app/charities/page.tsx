@@ -141,25 +141,51 @@ setNotes('');
     <div className="min-h-screen bg-[#f5f4f2]">
       <div className="container mx-auto px-8 py-12 max-w-4xl">
         
-        <div className="mb-8 flex justify-between items-start">
-          <div>
-            <h1 className="text-4xl font-serif text-[#3a3a3a] mb-3">
-              Charity Dashboard
-            </h1>
-            <p className="text-lg" style={{color: '#8B8589'}}>
-              Post urgent needs for your organization
-            </p>
-          </div>
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              router.push('/');
-            }}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            Sign Out
-          </button>
-        </div>
+        <div className="mb-8">
+  <div className="flex justify-between items-start mb-4">
+    <div>
+      <h1 className="text-4xl font-serif text-[#3a3a3a] mb-3">
+        Charity Dashboard
+      </h1>
+      <p className="text-lg" style={{color: '#8B8589'}}>
+        Manage your organization's needs
+      </p>
+    </div>
+    <button
+      onClick={async () => {
+        await supabase.auth.signOut();
+        router.push('/');
+      }}
+      className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+    >
+      Sign Out
+    </button>
+  </div>
+  
+  {/* Navigation Tabs */}
+<div className="flex gap-3 border-b border-gray-200 pb-2">
+  <a 
+    href="/charities"
+    className="px-6 py-3 font-medium text-white rounded-t-lg transition-all hover:opacity-90"
+    style={{
+      background: 'linear-gradient(135deg, #000080 0%, #0000b3 100%)',
+      borderBottom: '3px solid #000080'
+    }}
+  >
+    ⚡ Urgent Needs
+  </a>
+  <a 
+    href="/charities/families"
+    className="px-6 py-3 font-medium text-white rounded-t-lg transition-all hover:opacity-90"
+    style={{
+      background: 'linear-gradient(135deg, #ea666aff 0%, #a24b4bff 100%)',
+      boxShadow: '0 4px 12px rgba(62, 63, 69, 0.3)'
+    }}
+  >
+    ✨ Holiday Families Program
+  </a>
+</div>
+</div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">

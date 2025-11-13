@@ -24,12 +24,14 @@ export default function RootLayout({
                 </span>
               </div>
               
-              <nav>
+              
+  {/* Desktop Navigation - Hidden on Mobile */}
+  <nav>
   {/* Desktop Navigation - Hidden on Mobile */}
   <div className="hidden md:flex items-center gap-8">
     <a href="/" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>Home</a>
     <a href="/needs" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>Browse Needs</a>
-    <a href="/charities" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>For Charities</a>
+    <a href="/adopt-a-family" className="font-medium transition-colors hover:text-[#667eea]" style={{color: '#667eea'}}>✨ Holiday Family Sponsors</a>    <a href="/charities" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>For Charities</a>
     <a href="/about" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>About</a>
     <a href="/login" className="bg-[#000080] text-white px-6 py-2 rounded-lg hover:opacity-90 transition-opacity">
       Sign In
@@ -59,6 +61,7 @@ export default function RootLayout({
 <div id="mobile-menu" className="hidden md:hidden absolute top-16 right-0 bg-white shadow-lg rounded-lg p-4 m-4 z-50 min-w-[200px]">
   <div className="flex flex-col gap-3">
     <a href="/" className="font-medium py-2 px-3 rounded hover:bg-gray-100 transition-colors" style={{color: '#8B8589'}}>Home</a>
+    <a href="/adopt-a-family" className="font-medium py-2 px-3 rounded hover:bg-purple-50 transition-colors" style={{color: '#667eea'}}>✨ Sponsor a Family</a>
     <a href="/needs" className="font-medium py-2 px-3 rounded hover:bg-gray-100 transition-colors" style={{color: '#8B8589'}}>Browse Needs</a>
     <a href="/charities" className="font-medium py-2 px-3 rounded hover:bg-gray-100 transition-colors" style={{color: '#8B8589'}}>For Charities</a>
     <a href="/about" className="font-medium py-2 px-3 rounded hover:bg-gray-100 transition-colors" style={{color: '#8B8589'}}>About</a>
@@ -95,7 +98,7 @@ export default function RootLayout({
               </div>
               <div>
                 <h4 className="font-semibold mb-4">Contact</h4>
-                <p style={{color: '#8B8589'}}>support@neighborsos.org</p>
+                <p style={{color: '#8B8589'}}>info@neighborsos.org</p>
               </div>
             </div>
             <div className="border-t mt-8 pt-8 text-center" style={{borderColor: '#4a4a4a', color: '#8B8589'}}>
