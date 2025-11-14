@@ -577,47 +577,66 @@ export default function AdoptAFamilyPage() {
                 
                 <div className="space-y-3 mb-4">
                   
-                  <div className="border-2 border-gray-300 rounded-lg p-4 hover:border-purple-500 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="radio"
-                        id="partial"
-                        name="sponsorshipType"
-                        checked={sponsorshipType === 'partial'}
-                        onChange={() => setSponsorshipType('partial')}
-                        className="mt-1"
-                      />
-                      <div className="flex-1">
-                        <label htmlFor="partial" className="font-semibold text-gray-800 cursor-pointer">
-                          Option 1: Sponsor a Portion
-                        </label>
-                        <p className="text-xs text-gray-600 mt-1">
-                          Contribute any amount. The family stays available for other donors to add to.
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {sponsorshipType === 'partial' && (
-                      <div className="mt-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Your Contribution Amount ($) *
-                        </label>
-                        <input
-                          type="number"
-                          value={donationAmount}
-                          onChange={(e) => setDonationAmount(e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                          placeholder="50"
-                          min="1"
-                          max={Math.max(0, selectedFamily.estimated_cost - selectedFamily.amount_committed)}
-                          required
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Any amount helps! Remaining needed: ${Math.max(0, selectedFamily.estimated_cost - selectedFamily.amount_committed)}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  {/* Option 1: Partial Sponsorship */}
+<div className="border-2 border-gray-300 rounded-lg p-4 hover:border-purple-500 transition-colors">
+  <div className="flex items-start gap-3">
+    <input
+      type="radio"
+      id="partial"
+      name="sponsorshipType"
+      checked={sponsorshipType === 'partial'}
+      onChange={() => setSponsorshipType('partial')}
+      className="mt-1"
+    />
+    <div className="flex-1">
+      <label htmlFor="partial" className="font-semibold text-gray-800 cursor-pointer">
+        Option 1: Sponsor Any Percentage
+      </label>
+      <p className="text-xs text-gray-600 mt-1">
+        Contribute 10%, 25%, 50%, or any amount you choose. This family stays available for other donors to complete the funding.
+      </p>
+    </div>
+  </div>
+  
+  {sponsorshipType === 'partial' && (
+    <div className="mt-3">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Your Contribution Amount ($) *
+      </label>
+      
+      {/* Quick percentage buttons */}
+      <div className="flex gap-2 mb-3">
+        {[25, 50, 75, 100].map(percent => {
+          const amount = Math.round((selectedFamily.estimated_cost - selectedFamily.amount_committed) * (percent / 100));
+          return (
+            <button
+              key={percent}
+              type="button"
+              onClick={() => setDonationAmount(amount.toString())}
+              className="flex-1 px-3 py-2 text-xs border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors font-medium text-purple-700"
+            >
+              {percent}%<br/>${amount}
+            </button>
+          );
+        })}
+      </div>
+      
+      <input
+        type="number"
+        value={donationAmount}
+        onChange={(e) => setDonationAmount(e.target.value)}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+        placeholder="Or enter custom amount"
+        min="1"
+        max={Math.max(0, selectedFamily.estimated_cost - selectedFamily.amount_committed)}
+        required
+      />
+      <p className="text-xs text-gray-500 mt-1">
+        Remaining needed: ${Math.max(0, selectedFamily.estimated_cost - selectedFamily.amount_committed)}
+      </p>
+    </div>
+  )}
+</div>
 
                   <div className="border-2 border-gray-300 rounded-lg p-4 hover:border-purple-500 transition-colors">
                     <div className="flex items-start gap-3">
