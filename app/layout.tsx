@@ -86,17 +86,16 @@ export default function RootLayout({
               </div>
 
               {/* Quick Links */}
-<div>
-  <h3 className="text-lg font-serif mb-3">Quick Links</h3>
-  <ul className="space-y-2 text-sm">
-    <li><a href="/" className="text-gray-300 hover:text-white transition-colors">Home</a></li>
-    <li><a href="/needs" className="text-gray-300 hover:text-white transition-colors">Browse Needs</a></li>
-    <li><a href="/adopt-a-family" className="text-gray-300 hover:text-white transition-colors">Sponsor a Family</a></li>
-    <li><a href="/about" className="text-gray-300 hover:text-white transition-colors">About</a></li>
-    <li><a href="/privacy" className="text-gray-300 hover:text-white transition-colors">Privacy Policy</a></li>
-    <li><a href="/terms" className="text-gray-300 hover:text-white transition-colors">Terms of Service</a></li>
-    <li><a href="/signup" className="text-gray-300 hover:text-white transition-colors">For Charities</a></li>
-  </ul>
+<div className="hidden md:flex items-center gap-8">
+  <a href="/" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>Home</a>
+  <a href="/needs" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>Browse Needs</a>
+  <a href="/adopt-a-family" className="font-medium transition-colors hover:text-[#667eea]" style={{color: '#667eea'}}>✨ Sponsor a Family</a>
+  <a href="/charities" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>For Charities</a>
+  <a href="/faq" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>FAQ</a>
+  <a href="/contact" className="font-medium transition-colors hover:text-[#000080]" style={{color: '#8B8589'}}>Contact</a>
+  <a href="/login" className="bg-[#000080] text-white px-6 py-2 rounded-lg hover:opacity-90 transition-opacity">
+    Sign In
+  </a>
 </div>
 
               {/* Contact */}
