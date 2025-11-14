@@ -11,7 +11,6 @@ export default function NeedsPage() {
   const [userZipCode, setUserZipCode] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Claim modal states
   const [selectedNeed, setSelectedNeed] = useState<any>(null);
   const [donorEmail, setDonorEmail] = useState('');
   const [donorName, setDonorName] = useState('');
@@ -20,7 +19,6 @@ export default function NeedsPage() {
 
   const categories = ['all', 'food', 'clothing', 'household items', 'medical', 'other'];
 
-  // Share function
   function shareNeed(need: any) {
     const url = `https://neighborsos.org/needs`;
     const text = `Help ${need.charity} get ${need.item}! Only ${need.urgencyText} left. Support local charities on NeighborSOS.`;
@@ -415,7 +413,6 @@ export default function NeedsPage() {
                     </div>
                   )}
 
-                  {/* Help & Share Buttons */}
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
@@ -430,45 +427,57 @@ export default function NeedsPage() {
                     
                     <div className="relative group">
                       <button
-                        className="px-3 py-2 border-2 border-gray-300 rounded-lg hover:border-purple-500 transition-colors"
+                        type="button"
+                        onClick={() => {
+                          const dropdown = document.getElementById(`share-${need.id}`);
+                          dropdown?.classList.toggle('hidden');
+                        }}
+                        className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm flex items-center gap-1"
                         title="Share this need"
                       >
-                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                         </svg>
+                        Share
                       </button>
                       
-                      <div className="hidden group-hover:block absolute right-0 bottom-full mb-2 bg-white border-2 border-purple-500 rounded-lg shadow-xl p-3 w-48 z-10">
+                      <div 
+                        id={`share-${need.id}`}
+                        className="hidden group-hover:block absolute right-0 bottom-full mb-2 bg-white border-2 border-blue-500 rounded-lg shadow-xl p-3 w-48 z-10"
+                      >
                         <p className="text-xs font-semibold text-gray-700 mb-2">Share this need:</p>
                         <div className="space-y-2">
                           
-                         <a   href={shareNeed(need).facebookUrl}
+                          <a  href={shareNeed(need).facebookUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600 transition-colors">
+                            className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
+                          >
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                             </svg>
-                            Share on Facebook
+                            <span>Facebook</span>
                           </a>
                           
                           <button
+                            type="button"
                             onClick={shareNeed(need).copyLink}
                             className="flex items-center gap-2 text-sm text-gray-700 hover:text-purple-600 transition-colors w-full text-left"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
-                            Copy Link
+                            <span>Copy Link</span>
                           </button>
                           
                           
                          <a   href={shareNeed(need).emailUrl}
-                            className="flex items-center gap-2 text-sm text-gray-700 hover:text-green-600 transition-colors">
+                            className="flex items-center gap-2 text-sm text-gray-700 hover:text-green-600 transition-colors"
+                          >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
-                            Share via Email
+                            <span>Email</span>
                           </a>
                         </div>
                       </div>
