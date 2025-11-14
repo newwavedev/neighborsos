@@ -20,6 +20,23 @@ export default function NeedsPage() {
 
   const categories = ['all', 'food', 'clothing', 'household items', 'medical', 'other'];
 
+  // Share function
+  function shareNeed(need: any) {
+    const url = `https://neighborsos.org/needs`;
+    const text = `Help ${need.charity} get ${need.item}! Only ${need.urgencyText} left. Support local charities on NeighborSOS.`;
+    
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`;
+    
+    const copyLink = () => {
+      navigator.clipboard.writeText(`${text}\n\n${url}`);
+      alert('Link copied to clipboard! Share it with your friends.');
+    };
+    
+    const emailUrl = `mailto:?subject=${encodeURIComponent('Help Local Charities')}&body=${encodeURIComponent(text + '\n\n' + url)}`;
+    
+    return { facebookUrl, copyLink, emailUrl };
+  }
+
   useEffect(() => {
     fetchNeeds();
   }, []);
@@ -61,24 +78,22 @@ export default function NeedsPage() {
   }
 
   function filterNeeds() {
-  let filtered = needs;
+    let filtered = needs;
 
-  // Filter by category
-  if (selectedCategory !== 'all') {
-    filtered = filtered.filter(need => 
-      need.category.toLowerCase() === selectedCategory.toLowerCase()
-    );
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(need => 
+        need.category.toLowerCase() === selectedCategory.toLowerCase()
+      );
+    }
+
+    if (searchQuery) {
+      filtered = filtered.filter(need =>
+        need.charity.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    setFilteredNeeds(filtered);
   }
-
-  // Filter by charity name only
-  if (searchQuery) {
-    filtered = filtered.filter(need =>
-      need.charity.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }
-
-  setFilteredNeeds(filtered);
-}
 
   async function calculateDistance(zip1: string, zip2: string): Promise<number> {
     try {
@@ -164,7 +179,6 @@ export default function NeedsPage() {
       return;
     }
     
-    // Send emails (donor and charity)
     await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -246,7 +260,6 @@ export default function NeedsPage() {
     <div className="min-h-screen bg-[#f5f4f2]">
       <div className="container mx-auto px-4 py-12 max-w-7xl">
         
-        {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-4xl md:text-5xl font-serif text-[#2d3436] mb-3">
             Urgent Needs
@@ -256,61 +269,56 @@ export default function NeedsPage() {
           </p>
         </div>
 
-        {/* Filters Section */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <div className="grid md:grid-cols-3 gap-4">
             
-            {/* Search Charities */}
-<div className="relative">
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    Search Charities
-  </label>
-  <input
-    type="text"
-    value={searchQuery}
-    onChange={(e) => setSearchQuery(e.target.value)}
-    placeholder="Start typing charity name..."
-    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  />
-  
-  {/* Autocomplete Dropdown - Charities Only */}
-  {searchQuery && (
-    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-      {Array.from(new Set(needs.map(n => n.charity)))
-        .filter(charity => 
-          charity.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        .slice(0, 8)
-        .map((charity, idx) => (
-          <button
-            key={`charity-${idx}`}
-            onClick={() => setSearchQuery(charity)}
-            className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-0 last:rounded-b-lg first:rounded-t-lg"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-800">{charity}</span>
-              <span className="text-xs text-gray-500">
-                {needs.filter(n => n.charity === charity).length} need{needs.filter(n => n.charity === charity).length !== 1 ? 's' : ''}
-              </span>
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search Charities
+              </label>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Start typing charity name..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              
+              {searchQuery && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {Array.from(new Set(needs.map(n => n.charity)))
+                    .filter(charity => 
+                      charity.toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                    .slice(0, 8)
+                    .map((charity, idx) => (
+                      <button
+                        key={`charity-${idx}`}
+                        onClick={() => setSearchQuery(charity)}
+                        className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-0 last:rounded-b-lg first:rounded-t-lg"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-800">{charity}</span>
+                          <span className="text-xs text-gray-500">
+                            {needs.filter(n => n.charity === charity).length} need{needs.filter(n => n.charity === charity).length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      </button>
+                    ))
+                  }
+                  
+                  {Array.from(new Set(needs.map(n => n.charity)))
+                    .filter(charity => 
+                      charity.toLowerCase().includes(searchQuery.toLowerCase())
+                    ).length === 0 && (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      No charities found
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          </button>
-        ))
-      }
-      
-      {/* No results */}
-      {Array.from(new Set(needs.map(n => n.charity)))
-        .filter(charity => 
-          charity.toLowerCase().includes(searchQuery.toLowerCase())
-        ).length === 0 && (
-        <div className="px-4 py-3 text-sm text-gray-500 text-center">
-          No charities found
-        </div>
-      )}
-    </div>
-  )}
-</div>
 
-            {/* Category Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Category
@@ -328,7 +336,6 @@ export default function NeedsPage() {
               </select>
             </div>
 
-            {/* Zip Code Distance */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Your Zip Code
@@ -353,13 +360,11 @@ export default function NeedsPage() {
 
           </div>
 
-          {/* Results count */}
           <div className="mt-4 text-center text-sm text-gray-600">
             Showing {filteredNeeds.length} of {needs.length} needs
           </div>
         </div>
 
-        {/* Needs Grid */}
         {filteredNeeds.length === 0 ? (
           <div className="bg-white rounded-lg shadow-lg p-12 text-center">
             <p className="text-2xl text-gray-600 mb-2">No needs found</p>
@@ -372,23 +377,19 @@ export default function NeedsPage() {
                 key={need.id}
                 className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex flex-col"
               >
-                {/* Urgency Badge */}
                 <div className={`px-3 py-2 text-xs font-semibold border-b ${getUrgencyColor(need.urgency)}`}>
                   ⏰ {need.urgencyText} left
                 </div>
 
                 <div className="p-4 flex-1 flex flex-col">
-                  {/* Item Name */}
                   <h3 className="text-lg font-bold text-[#2d3436] mb-2">
                     {need.item}
                   </h3>
 
-                  {/* Charity */}
                   <p className="text-sm text-gray-600 mb-3">
                     {need.charity}
                   </p>
 
-                  {/* Details */}
                   <div className="space-y-2 mb-4 text-sm flex-1">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Quantity:</span>
@@ -408,24 +409,73 @@ export default function NeedsPage() {
                     )}
                   </div>
 
-                  {/* Notes */}
                   {need.notes && (
                     <div className="bg-gray-50 rounded p-2 mb-4 text-xs text-gray-600 italic">
                       "{need.notes}"
                     </div>
                   )}
 
-                  {/* Help Button */}
-                  <button
-                    onClick={() => {
-                      setSelectedNeed(need);
-                      setDonorQuantity(1);
-                    }}
-                    className="w-full py-2 rounded-lg font-semibold text-white transition-all hover:opacity-90"
-                    style={{backgroundColor: '#FF8559'}}
-                  >
-                    Help Now →
-                  </button>
+                  {/* Help & Share Buttons */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedNeed(need);
+                        setDonorQuantity(1);
+                      }}
+                      className="flex-1 py-2 rounded-lg font-semibold text-white transition-all hover:opacity-90"
+                      style={{backgroundColor: '#FF8559'}}
+                    >
+                      Help Now →
+                    </button>
+                    
+                    <div className="relative group">
+                      <button
+                        className="px-3 py-2 border-2 border-gray-300 rounded-lg hover:border-purple-500 transition-colors"
+                        title="Share this need"
+                      >
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                        </svg>
+                      </button>
+                      
+                      <div className="hidden group-hover:block absolute right-0 bottom-full mb-2 bg-white border-2 border-purple-500 rounded-lg shadow-xl p-3 w-48 z-10">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">Share this need:</p>
+                        <div className="space-y-2">
+                          
+                            href={shareNeed(need).facebookUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
+                          <a>
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                            Share on Facebook
+                          </a>
+                          
+                          <button
+                            onClick={shareNeed(need).copyLink}
+                            className="flex items-center gap-2 text-sm text-gray-700 hover:text-purple-600 transition-colors w-full text-left"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Copy Link
+                          </button>
+                          
+                          
+                            href={shareNeed(need).emailUrl}
+                            className="flex items-center gap-2 text-sm text-gray-700 hover:text-green-600 transition-colors"
+                          <a>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Share via Email
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -434,7 +484,6 @@ export default function NeedsPage() {
 
       </div>
 
-      {/* Claim Modal - Same as homepage */}
       {selectedNeed && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
@@ -454,7 +503,6 @@ export default function NeedsPage() {
               </div>
             </div>
 
-            {/* Quantity Selection */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 How many can you donate?
