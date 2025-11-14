@@ -15,6 +15,24 @@ export default function AdoptAFamilyPage() {
   const [friendEmails, setFriendEmails] = useState<string[]>(['']);
   const [splitMessage, setSplitMessage] = useState('');
 
+  // Share function
+  function shareFamily(family: any) {
+    const url = `https://neighborsos.org/adopt-a-family`;
+    const remaining = Math.max(0, family.estimated_cost - family.amount_committed);
+    const text = `Help sponsor ${family.family_name} (family of ${family.family_size}) this holiday season! Still need $${remaining}. Support local families on NeighborSOS.`;
+    
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`;
+    
+    const copyLink = () => {
+      navigator.clipboard.writeText(`${text}\n\n${url}`);
+      alert('Link copied to clipboard! Share it with your friends.');
+    };
+    
+    const emailUrl = `mailto:?subject=${encodeURIComponent('Help Sponsor a Family for the Holidays')}&body=${encodeURIComponent(text + '\n\n' + url)}`;
+    
+    return { facebookUrl, copyLink, emailUrl };
+  }
+
   useEffect(() => {
     fetchFamilies();
   }, []);
@@ -218,7 +236,6 @@ export default function AdoptAFamilyPage() {
       })
     });
 
-    // If split sponsorship, send invite emails to friends
     if (sponsorshipType === 'split' && friendEmails.length > 0) {
       const validFriendEmails = friendEmails.filter(email => email && email.includes('@'));
       
@@ -495,20 +512,82 @@ export default function AdoptAFamilyPage() {
                       Through: {family.charities.name}
                     </p>
 
-                    <button
-                      onClick={() => {
-                        setSelectedFamily(family);
-                        setDonationAmount(remaining > 0 ? remaining.toString() : '');
-                      }}
-                      className="w-full py-3 rounded-lg font-semibold text-white transition-all duration-300 hover:opacity-90 shadow-lg"
-                      style={{
-                        background: remaining > 0 
-                          ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
-                          : 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)'
-                      }}
-                    >
-                      {remaining > 0 ? '💝 Help This Family' : '✓ Fully Sponsored'}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedFamily(family);
+                          setDonationAmount(remaining > 0 ? remaining.toString() : '');
+                        }}
+                        className="flex-1 py-3 rounded-lg font-semibold text-white transition-all duration-300 hover:opacity-90 shadow-lg"
+                        style={{
+                          background: remaining > 0 
+                            ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+                            : 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)'
+                        }}
+                      >
+                        {remaining > 0 ? '💝 Help This Family' : '✓ Fully Sponsored'}
+                      </button>
+                      
+                      {remaining > 0 && (
+                        <div className="relative group">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const dropdown = document.getElementById(`share-family-${family.id}`);
+                              dropdown?.classList.toggle('hidden');
+                            }}
+                            className="px-3 py-3 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors font-medium text-sm flex items-center gap-1"
+                            title="Share this family"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                            </svg>
+                            Share
+                          </button>
+                          
+                          <div 
+                            id={`share-family-${family.id}`}
+                            className="hidden group-hover:block absolute right-0 bottom-full mb-2 bg-white border-2 border-purple-500 rounded-lg shadow-xl p-3 w-48 z-10"
+                          >
+                            <p className="text-xs font-semibold text-gray-700 mb-2">Share this family:</p>
+                            <div className="space-y-2">
+                              
+                              <a  href={shareFamily(family).facebookUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                </svg>
+                                <span>Facebook</span>
+                              </a>
+                              
+                              <button
+                                type="button"
+                                onClick={shareFamily(family).copyLink}
+                                className="flex items-center gap-2 text-sm text-gray-700 hover:text-purple-600 transition-colors w-full text-left"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                <span>Copy Link</span>
+                              </button>
+                              
+                              
+                              <a  href={shareFamily(family).emailUrl}
+                                className="flex items-center gap-2 text-sm text-gray-700 hover:text-green-600 transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                <span>Email</span>
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -577,66 +656,64 @@ export default function AdoptAFamilyPage() {
                 
                 <div className="space-y-3 mb-4">
                   
-                  {/* Option 1: Partial Sponsorship */}
-<div className="border-2 border-gray-300 rounded-lg p-4 hover:border-purple-500 transition-colors">
-  <div className="flex items-start gap-3">
-    <input
-      type="radio"
-      id="partial"
-      name="sponsorshipType"
-      checked={sponsorshipType === 'partial'}
-      onChange={() => setSponsorshipType('partial')}
-      className="mt-1"
-    />
-    <div className="flex-1">
-      <label htmlFor="partial" className="font-semibold text-gray-800 cursor-pointer">
-        Option 1: Sponsor Any Percentage
-      </label>
-      <p className="text-xs text-gray-600 mt-1">
-        Contribute 10%, 25%, 50%, or any amount you choose. This family stays available for other donors to complete the funding.
-      </p>
-    </div>
-  </div>
-  
-  {sponsorshipType === 'partial' && (
-    <div className="mt-3">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        Your Contribution Amount ($) *
-      </label>
-      
-      {/* Quick percentage buttons */}
-      <div className="flex gap-2 mb-3">
-        {[25, 50, 75, 100].map(percent => {
-          const amount = Math.round((selectedFamily.estimated_cost - selectedFamily.amount_committed) * (percent / 100));
-          return (
-            <button
-              key={percent}
-              type="button"
-              onClick={() => setDonationAmount(amount.toString())}
-              className="flex-1 px-3 py-2 text-xs border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors font-medium text-purple-700"
-            >
-              {percent}%<br/>${amount}
-            </button>
-          );
-        })}
-      </div>
-      
-      <input
-        type="number"
-        value={donationAmount}
-        onChange={(e) => setDonationAmount(e.target.value)}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-        placeholder="Or enter custom amount"
-        min="1"
-        max={Math.max(0, selectedFamily.estimated_cost - selectedFamily.amount_committed)}
-        required
-      />
-      <p className="text-xs text-gray-500 mt-1">
-        Remaining needed: ${Math.max(0, selectedFamily.estimated_cost - selectedFamily.amount_committed)}
-      </p>
-    </div>
-  )}
-</div>
+                  <div className="border-2 border-gray-300 rounded-lg p-4 hover:border-purple-500 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="radio"
+                        id="partial"
+                        name="sponsorshipType"
+                        checked={sponsorshipType === 'partial'}
+                        onChange={() => setSponsorshipType('partial')}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <label htmlFor="partial" className="font-semibold text-gray-800 cursor-pointer">
+                          Option 1: Sponsor Any Percentage
+                        </label>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Contribute 10%, 25%, 50%, or any amount you choose. This family stays available for other donors to complete the funding.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {sponsorshipType === 'partial' && (
+                      <div className="mt-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Your Contribution Amount ($) *
+                        </label>
+                        
+                        <div className="flex gap-2 mb-3">
+                          {[25, 50, 75, 100].map(percent => {
+                            const amount = Math.round((selectedFamily.estimated_cost - selectedFamily.amount_committed) * (percent / 100));
+                            return (
+                              <button
+                                key={percent}
+                                type="button"
+                                onClick={() => setDonationAmount(amount.toString())}
+                                className="flex-1 px-3 py-2 text-xs border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors font-medium text-purple-700"
+                              >
+                                {percent}%<br/>${amount}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        
+                        <input
+                          type="number"
+                          value={donationAmount}
+                          onChange={(e) => setDonationAmount(e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          placeholder="Or enter custom amount"
+                          min="1"
+                          max={Math.max(0, selectedFamily.estimated_cost - selectedFamily.amount_committed)}
+                          required
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Remaining needed: ${Math.max(0, selectedFamily.estimated_cost - selectedFamily.amount_committed)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="border-2 border-gray-300 rounded-lg p-4 hover:border-purple-500 transition-colors">
                     <div className="flex items-start gap-3">
