@@ -3,34 +3,8 @@
 import localFont from "next/font/local";
 import "./globals.css";
 
-import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'NeighborSOS - Connecting Neighbors in Need',
-  description: 'Real-time platform connecting local donors with verified charities. Browse urgent needs, sponsor families for the holidays, and make an immediate impact in your community.',
-  openGraph: {
-    title: 'NeighborSOS - Connecting Neighbors in Need',
-    description: 'Real-time platform connecting local donors with verified charities. Browse urgent needs and sponsor families.',
-    url: 'https://neighborsos.org',
-    siteName: 'NeighborSOS',
-    images: [
-      {
-        url: 'https://neighborsos.org/og-image.png',
-        width: 1200,
-        height: 650,
-        alt: 'NeighborSOS - Connecting Neighbors in Need',
-      },
-    ],
-    locale: 'en_US',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'NeighborSOS - Connecting Neighbors in Need',
-    description: 'Real-time platform connecting local donors with verified charities.',
-    images: ['https://neighborsos.org/og-image.png'],
-  },
-};
+
 
 export default function RootLayout({
   children,
@@ -39,7 +13,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <title>NeighborSOS - Connecting Neighbors in Need</title>
+        <meta name="description" content="Real-time platform connecting local donors with verified charities. Browse urgent needs, sponsor families for the holidays." />
+        <meta property="og:title" content="NeighborSOS - Connecting Neighbors in Need" />
+        <meta property="og:description" content="Real-time platform connecting local donors with verified charities." />
+        <meta property="og:image" content="https://neighborsos.org/og-image.png" />
+        <meta property="og:url" content="https://neighborsos.org" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="NeighborSOS - Connecting Neighbors in Need" />
+        <meta name="twitter:description" content="Real-time platform connecting local donors with verified charities." />
+        <meta name="twitter:image" content="https://neighborsos.org/og-image.png" />
+      </head>
       <body className="antialiased">
+        {/* Navigation Bar */}
         {/* Navigation Bar */}
         <nav className="bg-white shadow-sm border-b" style={{borderColor: '#e5e4e2'}}>
           <div className="max-w-6xl mx-auto px-4">
