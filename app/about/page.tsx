@@ -1,182 +1,190 @@
-'use client';
-
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-[#f5f4f2]">
-      <div className="container mx-auto px-4 md:px-8 py-12 max-w-4xl">
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        <h1 className="text-4xl md:text-5xl font-serif text-[#2d3436] mb-6 text-center">
+          About NeighborSOS
+        </h1>
         
-        {/* Hero Section */}
-        <div className="mb-12 text-center">
-          <h1 className="text-4xl md:text-5xl font-serif text-[#3a3a3a] mb-4">
-            About NeighborSOS
-          </h1>
-          <p className="text-xl text-[#8B8589]">
-            Connecting communities in times of need
-          </p>
-        </div>
-
-        {/* Main Content */}
-        <div className="bg-white rounded-lg shadow-lg p-6 md:p-10 space-y-8">
+        <div className="bg-white rounded-lg shadow-lg p-8">
           
-          {/* Our Mission */}
-          <section>
-            <div className="border-l-4 border-[#000080] pl-6 mb-6">
-              <h2 className="text-2xl md:text-3xl font-serif text-[#3a3a3a] mb-3">
-                Our Mission
-              </h2>
-            </div>
-            <p className="text-lg leading-relaxed text-gray-700 mb-6">
-              We created NeighborSOS to make local giving simple and immediate:
+          <section className="mb-10">
+            <h2 className="text-3xl font-serif text-[#2d3436] mb-4">Our Mission</h2>
+            <p className="text-lg text-gray-700 leading-relaxed mb-4">
+              NeighborSOS connects urgent charity needs with local donors in real-time, ensuring that help arrives when it's needed most.
             </p>
-            <ul className="space-y-3 text-lg text-gray-700 ml-6">
-              <li className="flex items-start">
-                <span className="mr-3">•</span>
-                <span>In challenging economic times, many organizations face unexpected needs</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-3">•</span>
-                <span>Generous donors want to help but don't know where to start</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-3">•</span>
-                <span>Instead of scattered searches, NeighborSOS brings everyone together in one place</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-3">•</span>
-                <span>Charities can quickly post urgent needs, and donors can instantly see how to help their community—right now</span>
-              </li>
+            <p className="text-lg text-gray-700 leading-relaxed">
+              We believe that neighbors helping neighbors creates stronger, more compassionate communities. Our platform makes it easy for you to see exactly what local charities need right now—whether it's winter coats for children, food for families, or household essentials—and take immediate action.
+            </p>
+          </section>
+
+          <section className="mb-10">
+            <h2 className="text-3xl font-serif text-[#2d3436] mb-4">How It Works</h2>
+            
+            <div className="grid md:grid-cols-3 gap-6 mb-6">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg text-center">
+                <div className="text-4xl mb-3">🔍</div>
+                <h3 className="text-xl font-semibold text-[#2d3436] mb-2">Browse Needs</h3>
+                <p className="text-gray-700 text-sm">
+                  See real-time urgent needs from verified local charities
+                </p>
+              </div>
+              
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-lg text-center">
+                <div className="text-4xl mb-3">❤️</div>
+                <h3 className="text-xl font-semibold text-[#2d3436] mb-2">Choose to Help</h3>
+                <p className="text-gray-700 text-sm">
+                  Claim items you can donate and coordinate delivery
+                </p>
+              </div>
+              
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg text-center">
+                <div className="text-4xl mb-3">✨</div>
+                <h3 className="text-xl font-semibold text-[#2d3436] mb-2">Make Impact</h3>
+                <p className="text-gray-700 text-sm">
+                  Your donation reaches families within hours, not weeks
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="mb-10">
+            <h2 className="text-3xl font-serif text-[#2d3436] mb-4">Our Programs</h2>
+            
+            <div className="space-y-6">
+              <div className="border-l-4 border-orange-500 pl-4">
+                <h3 className="text-xl font-semibold text-[#2d3436] mb-2">🆘 Urgent Needs</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  Local charities post time-sensitive needs for specific items. You browse what's urgently needed, claim what you can donate, and deliver directly. Every need is verified and every donation makes an immediate impact.
+                </p>
+              </div>
+              
+              <div className="border-l-4 border-purple-500 pl-4">
+                <h3 className="text-xl font-semibold text-[#2d3436] mb-2">✨ Sponsor a Family</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  During the holiday season, sponsor local families in need. You can sponsor a family fully or split costs with friends and family. Every family is verified by partnering charities, and you receive clear instructions for gift delivery.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="mb-10">
+            <h2 className="text-3xl font-serif text-[#2d3436] mb-4">Our Commitment</h2>
+            
+            <div className="bg-blue-50 p-6 rounded-lg space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">✓</div>
+                <div>
+                  <h4 className="font-semibold text-[#2d3436] mb-1">Verified Charities</h4>
+                  <p className="text-gray-700 text-sm">All charities on our platform are verified 501(c)(3) organizations</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">✓</div>
+                <div>
+                  <h4 className="font-semibold text-[#2d3436] mb-1">Real Needs</h4>
+                  <p className="text-gray-700 text-sm">Every posted need is legitimate, urgent, and vetted by our team</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">✓</div>
+                <div>
+                  <h4 className="font-semibold text-[#2d3436] mb-1">Transparent Process</h4>
+                  <p className="text-gray-700 text-sm">You know exactly where your donation is going and when it's needed</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">✓</div>
+                <div>
+                  <h4 className="font-semibold text-[#2d3436] mb-1">Immediate Impact</h4>
+                  <p className="text-gray-700 text-sm">Your donations reach families within hours or days, not weeks or months</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="mb-10">
+            <h2 className="text-3xl font-serif text-[#2d3436] mb-4">Why NeighborSOS?</h2>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              Traditional charity donation models can feel impersonal and disconnected. You donate money or items, but you rarely see the direct impact or know if your contribution truly made a difference.
+            </p>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              NeighborSOS changes that. We connect you directly with urgent, specific needs in your local community. You see exactly what's needed, who needs it, and when. You coordinate directly with charities. And you know—without a doubt—that your donation arrived exactly when and where it was needed most.
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              We're not just facilitating donations. We're building a community of neighbors who care for one another.
+            </p>
+          </section>
+
+          <section className="mb-10">
+            <h2 className="text-3xl font-serif text-[#2d3436] mb-4">Based in Saint Paul</h2>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              NeighborSOS is proudly based in Saint Paul, Minnesota, serving local communities throughout the Twin Cities and beyond. We started with a simple belief: that technology can make charity more personal, more immediate, and more impactful.
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              As we grow, we remain committed to our core values of transparency, community, and compassion.
+            </p>
+          </section>
+
+          <section className="mb-10">
+            <h2 className="text-3xl font-serif text-[#2d3436] mb-4">For Charities</h2>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              Are you a 501(c)(3) charitable organization looking to connect with local donors? NeighborSOS makes it easy to:
+            </p>
+            <ul className="list-disc pl-6 mb-4 text-gray-700 space-y-2">
+              <li>Post urgent needs and get immediate responses</li>
+              <li>Coordinate directly with donors</li>
+              <li>List families for holiday sponsorship</li>
+              <li>Receive help exactly when you need it most</li>
             </ul>
-          </section>
-
-          {/* How It Works */}
-          <section>
-            <div className="border-l-4 border-[#FF8559] pl-6 mb-6">
-              <h2 className="text-2xl md:text-3xl font-serif text-[#3a3a3a] mb-3">
-                How It Works
-              </h2>
-            </div>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* For Donors */}
-              <div className="bg-blue-50 rounded-lg p-6 border-t-4 border-[#000080]">
-                <h3 className="text-xl font-semibold text-[#000080] mb-4">For Donors</h3>
-                <ol className="space-y-3 text-gray-700">
-                  <li className="flex items-start">
-                    <span className="font-bold text-[#000080] mr-3">1.</span>
-                    <span>Browse urgent needs from verified local charities</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="font-bold text-[#000080] mr-3">2.</span>
-                    <span>Click "Help" on any item that speaks to you</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="font-bold text-[#000080] mr-3">3.</span>
-                    <span>Commit to purchasing and delivering the item</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="font-bold text-[#000080] mr-3">4.</span>
-                    <span>The charity contacts you with delivery details</span>
-                  </li>
-                </ol>
-              </div>
-
-              {/* For Charities */}
-              <div className="bg-green-50 rounded-lg p-6 border-t-4 border-[#ADEBB3]">
-                <h3 className="text-xl font-semibold text-[#3a3a3a] mb-4">For Charities</h3>
-                <ol className="space-y-3 text-gray-700">
-                  <li className="flex items-start">
-                    <span className="font-bold text-[#3a3a3a] mr-3">1.</span>
-                    <span>Register your organization (verification within 48 hours)</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="font-bold text-[#3a3a3a] mr-3">2.</span>
-                    <span>Post urgent needs with specific details and timelines</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="font-bold text-[#3a3a3a] mr-3">3.</span>
-                    <span>Receive notifications when donors commit to help</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="font-bold text-[#3a3a3a] mr-3">4.</span>
-                    <span>Coordinate delivery and make an immediate impact</span>
-                  </li>
-                </ol>
-              </div>
-            </div>
-          </section>
-
-          {/* Founder Story */}
-          <section>
-            <div className="border-l-4 border-[#ADEBB3] pl-6 mb-6">
-              <h2 className="text-2xl md:text-3xl font-serif text-[#3a3a3a] mb-3">
-                Our Story
-              </h2>
-            </div>
-            
-            <div className="text-gray-700 space-y-4">
-              <p className="text-lg leading-relaxed">
-                NeighborSOS was founded by <span className="font-semibold">Donna Clark</span>, a St. Paul, Minnesota 
-                resident who experienced firsthand the frustration of trying to help local charities. After countless 
-                unreturned calls and missed connections, she watched as organizations struggled to find donors—and 
-                donors struggled to find where they were needed most.
-              </p>
-              
-              <p className="text-lg leading-relaxed">
-                The turning point came when a friend made a simple plea on social media to help a neighbor in need. 
-                The response was overwhelming: <span className="font-semibold">yet she ended up with an overabundance of boxes of mac and cheese</span> and 
-                <span className="font-semibold"> and boxes of cereal</span> from people who had been shopping 
-                the sales and wanted to share. That moment revealed the truth: people want to help, they just need to 
-                know what, where and when.
-              </p>
-              
-              <p className="text-lg leading-relaxed">
-                Donna, who lives with her 16-year-old daughter, spends her free time hiking and walking the beautiful 
-                Mississippi River Parkway—especially in fall when the leaves paint the riverbanks in brilliant colors. 
-                Those walks along the river, through neighborhoods filled with generous people, inspired her to build 
-                a platform where community connections could happen instantly.
-              </p>
-              
-              <p className="text-lg leading-relaxed font-medium text-[#000080]">
-                NeighborSOS was born from one simple belief: when we make it easy for neighbors to help neighbors, 
-                amazing things happen.
-              </p>
-            </div>
-          </section>
-
-          {/* Call to Action */}
-          <section className="bg-[#2a4a7c] rounded-lg p-8 text-white text-center">
-            <h2 className="text-2xl md:text-3xl font-serif mb-4">Ready to Make a Difference?</h2>
-            <p className="text-lg mb-6 opacity-90">
-              Whether you're looking to give or in need of support, we're here to connect you.
+            <p className="text-gray-700 leading-relaxed">
+              <a href="/signup" className="text-blue-600 hover:underline font-semibold">Register your charity</a> and start connecting with donors today.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-3xl font-serif text-[#2d3436] mb-4">Get Involved</h2>
+            <p className="text-gray-700 leading-relaxed mb-6">
+              Ready to make a difference in your community?
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
               <a 
-                href="/" 
-                className="bg-white text-[#000080] px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                href="/needs" 
+                className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg text-center font-semibold hover:opacity-90 transition-opacity"
               >
                 Browse Urgent Needs
               </a>
               <a 
-                href="/signup" 
-                className="bg-[#FF8559] text-white px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                href="/adopt-a-family" 
+                className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-3 rounded-lg text-center font-semibold hover:opacity-90 transition-opacity"
               >
-                Register Your Charity
+                Sponsor a Family
               </a>
             </div>
           </section>
 
-          {/* Contact */}
-          <section className="text-center pt-8 border-t border-gray-200">
-            <p className="text-gray-600">
-              Questions? Reach us at{' '}
-              <a href="mailto:info@neighborsos.org" className="text-[#000080] hover:underline font-medium">
-                info@neighborsos.org
-              </a>
+          <section className="border-t pt-8">
+            <h2 className="text-3xl font-serif text-[#2d3436] mb-4">Contact Us</h2>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              Have questions? Want to learn more? We'd love to hear from you.
             </p>
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <p className="text-gray-700 mb-2"><strong>NeighborSOS</strong></p>
+              <p className="text-gray-700 mb-2">Saint Paul, Minnesota</p>
+              <p className="text-gray-700 mb-2">Email: <a href="mailto:info@neighborsos.org" className="text-blue-600 hover:underline">info@neighborsos.org</a></p>
+              <p className="text-gray-700">
+                Follow us: 
+                <a href="#" className="text-blue-600 hover:underline ml-2">Facebook</a> | 
+                <a href="#" className="text-blue-600 hover:underline ml-2">Instagram</a> | 
+                <a href="#" className="text-blue-600 hover:underline ml-2">Threads</a>
+              </p>
+            </div>
           </section>
-
         </div>
-
       </div>
     </div>
   );
