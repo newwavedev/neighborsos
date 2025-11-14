@@ -86,16 +86,18 @@ export default function RootLayout({
               </div>
 
               {/* Quick Links */}
-              <div>
-                <h3 className="text-lg font-serif mb-3">Quick Links</h3>
-                <ul className="space-y-2 text-sm">
-                  <li><a href="/" className="text-gray-300 hover:text-white transition-colors">Home</a></li>
-                  <li><a href="/needs" className="text-gray-300 hover:text-white transition-colors">Browse Needs</a></li>
-                  <li><a href="/adopt-a-family" className="text-gray-300 hover:text-white transition-colors">Sponsor a Family</a></li>
-                  <li><a href="/about" className="text-gray-300 hover:text-white transition-colors">About</a></li>
-                  <li><a href="/signup" className="text-gray-300 hover:text-white transition-colors">For Charities</a></li>
-                </ul>
-              </div>
+<div>
+  <h3 className="text-lg font-serif mb-3">Quick Links</h3>
+  <ul className="space-y-2 text-sm">
+    <li><a href="/" className="text-gray-300 hover:text-white transition-colors">Home</a></li>
+    <li><a href="/needs" className="text-gray-300 hover:text-white transition-colors">Browse Needs</a></li>
+    <li><a href="/adopt-a-family" className="text-gray-300 hover:text-white transition-colors">Sponsor a Family</a></li>
+    <li><a href="/about" className="text-gray-300 hover:text-white transition-colors">About</a></li>
+    <li><a href="/privacy" className="text-gray-300 hover:text-white transition-colors">Privacy Policy</a></li>
+    <li><a href="/terms" className="text-gray-300 hover:text-white transition-colors">Terms of Service</a></li>
+    <li><a href="/signup" className="text-gray-300 hover:text-white transition-colors">For Charities</a></li>
+  </ul>
+</div>
 
               {/* Contact */}
               <div>
