@@ -23,9 +23,6 @@ export default function AboutPage() {
             
             <div className="grid md:grid-cols-3 gap-6 mb-6">
               <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg">
-                <div className="w-12 h-12 bg-[#8B8589] rounded-full flex items-center justify-center text-white font-bold text-xl mb-4">
-                  1
-                </div>
                 <h3 className="text-xl font-semibold text-[#2d3436] mb-2">Browse Needs</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   See real-time urgent needs from verified local charities
@@ -33,9 +30,6 @@ export default function AboutPage() {
               </div>
               
               <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg">
-                <div className="w-12 h-12 bg-[#c97357] rounded-full flex items-center justify-center text-white font-bold text-xl mb-4">
-                  2
-                </div>
                 <h3 className="text-xl font-semibold text-[#2d3436] mb-2">Choose to Help</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Claim items you can donate and coordinate delivery
@@ -43,9 +37,6 @@ export default function AboutPage() {
               </div>
               
               <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg">
-                <div className="w-12 h-12 bg-[#000080] rounded-full flex items-center justify-center text-white font-bold text-xl mb-4">
-                  3
-                </div>
                 <h3 className="text-xl font-semibold text-[#2d3436] mb-2">Make Impact</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Your donation reaches families within hours, not weeks
@@ -78,32 +69,40 @@ export default function AboutPage() {
             <h2 className="text-3xl font-serif text-[#2d3436] mb-4">Our Commitment</h2>
             
             <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg space-y-4">
-              <div className="flex items-start gap-4">
-                <div className="w-6 h-6 rounded-full bg-[#000080] flex-shrink-0 mt-1"></div>
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-[#000080] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
                 <div>
                   <h4 className="font-semibold text-[#2d3436] mb-1">Verified Charities</h4>
                   <p className="text-gray-600 text-sm">All charities on our platform are verified 501(c)(3) organizations</p>
                 </div>
               </div>
               
-              <div className="flex items-start gap-4">
-                <div className="w-6 h-6 rounded-full bg-[#000080] flex-shrink-0 mt-1"></div>
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-[#000080] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
                 <div>
                   <h4 className="font-semibold text-[#2d3436] mb-1">Real Needs</h4>
                   <p className="text-gray-600 text-sm">Every posted need is legitimate, urgent, and vetted by our team</p>
                 </div>
               </div>
               
-              <div className="flex items-start gap-4">
-                <div className="w-6 h-6 rounded-full bg-[#000080] flex-shrink-0 mt-1"></div>
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-[#000080] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
                 <div>
                   <h4 className="font-semibold text-[#2d3436] mb-1">Transparent Process</h4>
                   <p className="text-gray-600 text-sm">You know exactly where your donation is going and when it's needed</p>
                 </div>
               </div>
               
-              <div className="flex items-start gap-4">
-                <div className="w-6 h-6 rounded-full bg-[#000080] flex-shrink-0 mt-1"></div>
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-[#000080] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
                 <div>
                   <h4 className="font-semibold text-[#2d3436] mb-1">Immediate Impact</h4>
                   <p className="text-gray-600 text-sm">Your donations reach families within hours or days, not weeks or months</p>
