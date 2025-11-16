@@ -11,10 +11,10 @@ export default function CharitiesPage() {
   const [charities, setCharities] = useState<any[]>([]);
   const [selectedCharity, setSelectedCharity] = useState<string>('');
   const [itemName, setItemName] = useState('');
-const [quantity, setQuantity] = useState('1');
-const [category, setCategory] = useState('');
-const [urgencyHours, setUrgencyHours] = useState('24');
-const [notes, setNotes] = useState('');
+  const [quantity, setQuantity] = useState('1');
+  const [category, setCategory] = useState('');
+  const [urgencyHours, setUrgencyHours] = useState('24');
+  const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [myNeeds, setMyNeeds] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
@@ -74,11 +74,35 @@ const [notes, setNotes] = useState('');
     fetchMyNeeds();
   }, [selectedCharity]);
 
-  // NOW we can have the early return - after ALL hooks
+  // NOW we can have the early returns - after ALL hooks
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f5f4f2] flex items-center justify-center">
         <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  if (charities.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#f5f4f2] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl text-gray-600 mb-4">No charity found for your account.</p>
+          <p className="text-gray-500 mb-6">Please contact support at info@neighborsos.org</p>
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.push('/login');
+            }}
+            className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
     );
   }
@@ -90,26 +114,26 @@ const [notes, setNotes] = useState('');
     setIsSubmitting(true);
 
     const { error } = await supabase
-  .from('urgent_needs')
-  .insert({
-    charity_id: selectedCharity,
-    item_name: itemName,
-    quantity: parseInt(quantity),
-    category: category,
-    urgency_hours: parseInt(urgencyHours),
-    notes: notes,
-    status: 'available'
-  });
+      .from('urgent_needs')
+      .insert({
+        charity_id: selectedCharity,
+        item_name: itemName,
+        quantity: parseInt(quantity),
+        category: category,
+        urgency_hours: parseInt(urgencyHours),
+        notes: notes,
+        status: 'available'
+      });
 
     if (error) {
       alert('Error adding item. Please try again.');
     } else {
       alert('Item added successfully!');
       setItemName('');
-setQuantity('1');
-setCategory('');
-setUrgencyHours('24');
-setNotes('');
+      setQuantity('1');
+      setCategory('');
+      setUrgencyHours('24');
+      setNotes('');
       
       const { data } = await supabase
         .from('urgent_needs')
@@ -138,55 +162,55 @@ setNotes('');
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f4f2]">
-      <div className="container mx-auto px-8 py-12 max-w-4xl">
+    <div className="min-h-screen bg-[#f5f4f2] py-12 px-4">
+      <div className="max-w-6xl mx-auto">
         
-        <div className="mb-8">
-  <div className="flex justify-between items-start mb-4">
-    <div>
-      <h1 className="text-4xl font-serif text-[#3a3a3a] mb-3">
-        Charity Dashboard
-      </h1>
-      <p className="text-lg" style={{color: '#8B8589'}}>
-        Manage your organization's needs
-      </p>
-    </div>
-    <button
-      onClick={async () => {
-        await supabase.auth.signOut();
-        router.push('/');
-      }}
-      className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
-    >
-      Sign Out
-    </button>
-  </div>
-  
-  {/* Navigation Tabs */}
-<div className="flex gap-3 border-b border-gray-200 pb-2">
-  <a 
-    href="/charities"
-    className="px-6 py-3 font-medium text-white rounded-t-lg transition-all hover:opacity-90"
-    style={{
-      background: 'linear-gradient(135deg, #000080 0%, #0000b3 100%)',
-      borderBottom: '3px solid #000080'
-    }}
-  >
-    ⚡ Urgent Needs
-  </a>
-  <a 
-    href="/charities/families"
-    className="px-6 py-3 font-medium text-white rounded-t-lg transition-all hover:opacity-90"
-    style={{
-      background: 'linear-gradient(135deg, #ea666aff 0%, #a24b4bff 100%)',
-      boxShadow: '0 4px 12px rgba(62, 63, 69, 0.3)'
-    }}
-  >
-    ✨ Holiday Families Program
-  </a>
-</div>
-</div>
+        {/* Header with Sign Out */}
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <h1 className="text-4xl font-serif text-[#2d3436] mb-3">
+              Charity Dashboard
+            </h1>
+            <p className="text-lg text-gray-600">
+              Manage your organization's needs
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.push('/login');
+            }}
+            className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
+        
+        {/* Navigation Tabs */}
+        <div className="flex gap-3 border-b border-gray-200 pb-2 mb-8">
+          <a 
+            href="/charities"
+            className="px-6 py-3 font-medium text-white rounded-t-lg transition-all hover:opacity-90"
+            style={{
+              background: 'linear-gradient(135deg, #000080 0%, #0000b3 100%)',
+              borderBottom: '3px solid #000080'
+            }}
+          >
+            ⚡ Urgent Needs
+          </a>
+          <a 
+            href="/charities/families"
+            className="px-6 py-3 font-medium text-white rounded-t-lg transition-all hover:opacity-90"
+            style={{
+              background: 'linear-gradient(135deg, #ea666aff 0%, #a24b4bff 100%)',
+              boxShadow: '0 4px 12px rgba(62, 63, 69, 0.3)'
+            }}
+          >
+            ✨ Holiday Families Program
+          </a>
+        </div>
 
+        {/* Charity Info Card */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Your Organization
@@ -201,8 +225,12 @@ setNotes('');
               </span>
             )}
           </div>
+          {charities[0]?.contact_email && (
+            <p className="text-gray-600 mt-2">{charities[0].contact_email}</p>
+          )}
         </div>
 
+        {/* Pending Verification Message */}
         {selectedCharity && !charities[0]?.verified && (
           <div className="bg-amber-50 border-l-4 border-amber-500 p-6 mb-6">
             <h3 className="font-semibold text-amber-900 mb-2">Account Pending Verification</h3>
@@ -213,137 +241,140 @@ setNotes('');
           </div>
         )}
 
+        {/* Only show forms if verified */}
         {selectedCharity && charities[0]?.verified && (
           <>
+            {/* Add New Need Form */}
             <div className="bg-white rounded-lg shadow-lg p-6 mb-6 border-t-4 border-[#000080]">
-              <h2 className="text-2xl font-serif text-[#3a3a3a] mb-4">Add New Urgent Need</h2>
+              <h2 className="text-2xl font-serif text-[#2d3436] mb-4">Add New Urgent Need</h2>
               
               <form onSubmit={handleSubmit} className="space-y-4">
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      Item Needed *
-    </label>
-    <input
-      type="text"
-      value={itemName}
-      onChange={(e) => setItemName(e.target.value)}
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      placeholder="e.g., Winter Coats (Adult sizes)"
-      required
-    />
-  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Item Needed *
+                  </label>
+                  <input
+                    type="text"
+                    value={itemName}
+                    onChange={(e) => setItemName(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g., Winter Coats (Adult sizes)"
+                    required
+                  />
+                </div>
 
-  <div className="grid grid-cols-2 gap-4">
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        Quantity *
-      </label>
-      <input
-        type="number"
-        value={quantity}
-        onChange={(e) => setQuantity(e.target.value)}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        min="1"
-        required
-      />
-    </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Quantity *
+                    </label>
+                    <input
+                      type="number"
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      min="1"
+                      required
+                    />
+                  </div>
 
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        Category *
-      </label>
-      <select
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        required
-      >
-        <option value="">Select category</option>
-        <option value="clothing">Clothing</option>
-        <option value="food">Food</option>
-        <option value="household">Household Items</option>
-        <option value="vet">Vet Help</option>
-        <option value="misc">Miscellaneous</option>
-      </select>
-    </div>
-  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category *
+                    </label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    >
+                      <option value="">Select category</option>
+                      <option value="clothing">Clothing</option>
+                      <option value="food">Food</option>
+                      <option value="household">Household Items</option>
+                      <option value="vet">Vet Help</option>
+                      <option value="misc">Miscellaneous</option>
+                    </select>
+                  </div>
+                </div>
 
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      Urgency (hours) *
-    </label>
-    <input
-      type="number"
-      value={urgencyHours}
-      onChange={(e) => setUrgencyHours(e.target.value)}
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      min="1"
-      max="168"
-      required
-    />
-  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Urgency (hours) *
+                  </label>
+                  <input
+                    type="number"
+                    value={urgencyHours}
+                    onChange={(e) => setUrgencyHours(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    min="1"
+                    max="168"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Maximum 168 hours (1 week)</p>
+                </div>
 
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      Additional Notes
-    </label>
-    <textarea
-      value={notes}
-      onChange={(e) => setNotes(e.target.value)}
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      placeholder="Any important details about the items..."
-      maxLength={150}
-      rows={3}
-    />
-    <p className="text-xs text-gray-500 mt-1">{notes.length}/150 characters</p>
-  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Additional Notes
+                  </label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Any important details about the items..."
+                    maxLength={150}
+                    rows={3}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">{notes.length}/150 characters</p>
+                </div>
 
-  <button
-    type="submit"
-    disabled={isSubmitting}
-    className="w-full py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
-    style={{backgroundColor: '#000080', color: 'white'}}
-  >
-    {isSubmitting ? 'Adding...' : 'Add Urgent Need'}
-  </button>
-</form>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#000080] text-white py-3 rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Adding...' : 'Add Urgent Need'}
+                </button>
+              </form>
             </div>
 
+            {/* Posted Needs List */}
             <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-2xl font-serif text-[#3a3a3a] mb-4">My Posted Needs</h2>
+              <h2 className="text-2xl font-serif text-[#2d3436] mb-4">My Posted Needs</h2>
               
               {myNeeds.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">No urgent needs posted yet.</p>
               ) : (
                 <div className="space-y-3">
                   {myNeeds.map(need => (
-  <div 
-    key={need.id}
-    className="border rounded-lg p-4 flex justify-between items-start"
-    style={{borderColor: need.status === 'claimed' ? '#ADEBB3' : '#e5e4e2'}}
-  >
-    <div className="flex-1">
-      <div className="flex items-center gap-2 mb-1">
-        <h3 className="font-medium text-[#3a3a3a]">{need.item_name}</h3>
-        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full capitalize">
-          {need.category}
-        </span>
-      </div>
-      <p className="text-sm text-gray-500">
-        Qty: {need.quantity} · {need.urgency_hours} hours · 
-        <span className={need.status === 'claimed' ? 'text-green-600 font-medium' : 'text-gray-600'}>
-          {' '}{need.status === 'claimed' ? 'CLAIMED' : 'Available'}
-        </span>
-      </p>
-      {need.notes && (
-        <p className="text-xs text-gray-600 mt-2 italic bg-gray-50 p-2 rounded">"{need.notes}"</p>
-      )}
-      {need.claimed_by_email && (
-        <p className="text-xs text-gray-500 mt-2">
-          Claimed by: {need.claimed_by_email}
-        </p>
-      )}
-    </div>
+                    <div 
+                      key={need.id}
+                      className="border rounded-lg p-4 flex justify-between items-start"
+                      style={{borderColor: need.status === 'claimed' ? '#ADEBB3' : '#e5e4e2'}}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium text-[#2d3436]">{need.item_name}</h3>
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full capitalize">
+                            {need.category}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-500">
+                          Qty: {need.quantity} · {need.urgency_hours} hours · 
+                          <span className={need.status === 'claimed' ? 'text-green-600 font-medium' : 'text-gray-600'}>
+                            {' '}{need.status === 'claimed' ? 'CLAIMED' : 'Available'}
+                          </span>
+                        </p>
+                        {need.notes && (
+                          <p className="text-xs text-gray-600 mt-2 italic bg-gray-50 p-2 rounded">"{need.notes}"</p>
+                        )}
+                        {need.claimed_by_email && (
+                          <p className="text-xs text-gray-500 mt-2">
+                            Claimed by: {need.claimed_by_email}
+                          </p>
+                        )}
+                      </div>
                       
                       {need.status === 'available' && (
                         <button
