@@ -44,16 +44,27 @@ export default function NeedsPage() {
   }, [selectedCategory, searchQuery, needs]);
 
   async function fetchNeeds() {
-    const { data } = await supabase
-      .from('urgent_needs')
-      .select(`
-        *,
-        charities (name, contact_email, zip_code, auto_response_message)
-      `)
-      .eq('status', 'available')
-      .order('urgency_hours', { ascending: true });
+  const { data, error } = await supabase
+    .from('urgent_needs')
+    .select(`
+      *,
+      charities (
+        id,
+        name,
+        contact_email,
+        zip_code,
+        auto_response_message
+      )
+    `)
+    .eq('status', 'available')
+    .order('urgency_hours', { ascending: true });
 
-    if (data) {
+  console.log('Query result:', data);
+  console.log('Query error:', error);
+  console.log('Number of results:', data?.length);
+
+  if (data) {
+    // rest of code...
       const formattedNeeds = data.map((need: any) => ({
         id: need.id,
         charity: need.charities.name,
