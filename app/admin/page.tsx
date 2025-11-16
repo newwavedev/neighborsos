@@ -9,9 +9,11 @@ export default function AdminPage() {
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  const [pendingCharities, setPendingCharities] = useState<any[]>([]);
-  const [verifiedCharities, setVerifiedCharities] = useState<any[]>([]);
+  // Charities data
+  const [charities, setCharities] = useState<any[]>([]);
+  const [selectedTab, setSelectedTab] = useState<'pending' | 'verified' | 'all'>('pending');
   
   // Statistics
   const [stats, setStats] = useState({
@@ -24,369 +26,323 @@ export default function AdminPage() {
     fullyFundedFamilies: 0,
   });
 
-  // Check if user is admin
+  // Check if user is admin - IMPROVED VERSION
   useEffect(() => {
     async function checkAdmin() {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        router.push('/login');
-        return;
+      try {
+        // Get current user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        console.log('User check:', user); // Debug log
+        
+        if (userError || !user) {
+          console.log('No user found, redirecting to login');
+          router.push('/login');
+          return;
+        }
+        
+        setUser(user);
+        
+        // Check if user is in admins table
+        const { data: adminData, error: adminError } = await supabase
+          .from('admins')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        console.log('Admin check:', adminData, adminError); // Debug log
+        
+        if (adminError || !adminData) {
+          console.log('Not an admin');
+          setError('Access denied. Admin privileges required.');
+          setLoading(false);
+          // Don't redirect, just show error message
+          return;
+        }
+        
+        console.log('Admin verified!');
+        setIsAdmin(true);
+        setLoading(false);
+        
+        // Load data
+        fetchCharities();
+        fetchStats();
+      } catch (err) {
+        console.error('Error in checkAdmin:', err);
+        setError('An error occurred. Please try again.');
+        setLoading(false);
       }
-      
-      setUser(user);
-      
-      // Check if user is in admins table
-      const { data: adminData } = await supabase
-        .from('admins')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (!adminData) {
-        alert('Access denied. Admin privileges required.');
-        router.push('/');
-        return;
-      }
-      
-      setIsAdmin(true);
-      setLoading(false);
     }
     
     checkAdmin();
   }, [router]);
 
-  useEffect(() => {
-    if (!isAdmin) return;
-    fetchCharities();
-    fetchStats();
-  }, [isAdmin]);
-
+  // Fetch charities
   async function fetchCharities() {
-    // Fetch pending charities
-    const { data: pending } = await supabase
+    const { data, error } = await supabase
       .from('charities')
       .select('*')
-      .eq('verified', false)
       .order('created_at', { ascending: false });
     
-    if (pending) setPendingCharities(pending);
-
-    // Fetch verified charities
-    const { data: verified } = await supabase
-      .from('charities')
-      .select('*')
-      .eq('verified', true)
-      .order('name');
-    
-    if (verified) setVerifiedCharities(verified);
+    if (data) {
+      setCharities(data);
+    }
   }
 
+  // Fetch statistics
   async function fetchStats() {
-    // Total charities
-    const { count: totalCharities } = await supabase
-      .from('charities')
-      .select('*', { count: 'exact', head: true });
+    const { data: charities } = await supabase.from('charities').select('*');
+    const { data: needs } = await supabase.from('family_needs').select('*');
     
-    // Pending charities
-    const { count: pendingCount } = await supabase
-      .from('charities')
-      .select('*', { count: 'exact', head: true })
-      .eq('verified', false);
+    if (charities) {
+      setStats(prev => ({
+        ...prev,
+        totalCharities: charities.length,
+        pendingCharities: charities.filter(c => !c.is_verified).length,
+        verifiedCharities: charities.filter(c => c.is_verified).length,
+      }));
+    }
     
-    // Verified charities
-    const { count: verifiedCount } = await supabase
-      .from('charities')
-      .select('*', { count: 'exact', head: true })
-      .eq('verified', true);
-    
-    // Total needs
-    const { count: totalNeeds } = await supabase
-      .from('urgent_needs')
-      .select('*', { count: 'exact', head: true });
-    
-    // Claimed needs
-    const { count: claimedNeeds } = await supabase
-      .from('urgent_needs')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'claimed');
-    
-    // Total families
-    const { count: totalFamilies } = await supabase
-      .from('adopt_a_family')
-      .select('*', { count: 'exact', head: true });
-    
-    // Fully funded families
-    const { count: fullyFundedFamilies } = await supabase
-      .from('adopt_a_family')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'fully_adopted');
-    
-    setStats({
-      totalCharities: totalCharities || 0,
-      pendingCharities: pendingCount || 0,
-      verifiedCharities: verifiedCount || 0,
-      totalNeeds: totalNeeds || 0,
-      claimedNeeds: claimedNeeds || 0,
-      totalFamilies: totalFamilies || 0,
-      fullyFundedFamilies: fullyFundedFamilies || 0,
-    });
+    if (needs) {
+      const totalFamilies = new Set(needs.map(n => n.family_id)).size;
+      const claimedNeeds = needs.filter(n => n.claimed_by).length;
+      
+      // Count fully funded families
+      const familyFunding = needs.reduce((acc, need) => {
+        if (!acc[need.family_id]) {
+          acc[need.family_id] = { total: 0, claimed: 0 };
+        }
+        acc[need.family_id].total++;
+        if (need.claimed_by) acc[need.family_id].claimed++;
+        return acc;
+      }, {} as any);
+      
+      const fullyFunded = Object.values(familyFunding).filter(
+        (f: any) => f.total === f.claimed
+      ).length;
+      
+      setStats(prev => ({
+        ...prev,
+        totalNeeds: needs.length,
+        claimedNeeds,
+        totalFamilies,
+        fullyFundedFamilies: fullyFunded,
+      }));
+    }
   }
 
-  async function handleApprove(charityId: string, charityName: string, charityEmail: string) {
-    if (!confirm('Approve this charity?')) return;
-
+  // Approve charity
+  async function approveCharity(charityId: string) {
     const { error } = await supabase
       .from('charities')
-      .update({ verified: true })
+      .update({ is_verified: true })
       .eq('id', charityId);
-
+    
     if (!error) {
-      // Send approval email
-      await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: charityEmail,
-          subject: '🎉 Your NeighborSOS Charity Account is Approved!',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #000080;">Congratulations! You're Verified! 🎉</h2>
-              <p>Great news, <strong>${charityName}</strong>!</p>
-              <p>Your charity account has been verified and approved. You can now:</p>
-              <ul>
-                <li>Post urgent needs to the platform</li>
-                <li>Connect with local donors</li>
-                <li>Manage your posted needs</li>
-              </ul>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="https://neighborsos.org/login" 
-                   style="background-color: #000080; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
-                  Log In to Your Dashboard
-                </a>
-              </div>
-              <p>Questions? Reply to this email.</p>
-              <p>- The NeighborSOS Team</p>
-            </div>
-          `
-        })
-      });
-      
-      alert('Charity approved and notified!');
+      alert('Charity approved!');
       fetchCharities();
       fetchStats();
     }
   }
 
-  async function handleReject(charityId: string, charityEmail: string, charityName: string) {
-    const reason = prompt('Reason for rejection (optional - will be sent to charity):');
+  // Reject charity
+  async function rejectCharity(charityId: string) {
+    if (!confirm('Are you sure you want to reject this charity?')) return;
     
-    if (!confirm('Reject and delete this charity application?')) return;
-
     const { error } = await supabase
       .from('charities')
       .delete()
       .eq('id', charityId);
-
+    
     if (!error) {
-      // Send rejection email
-      await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: charityEmail,
-          subject: 'NeighborSOS Application Update',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2>Application Status Update</h2>
-              <p>Dear ${charityName},</p>
-              <p>Thank you for your interest in NeighborSOS.</p>
-              <p>Unfortunately, we're unable to approve your application at this time.</p>
-              ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
-              <p>If you have questions or would like to reapply, please contact us at info@neighborsos.org</p>
-              <p>- The NeighborSOS Team</p>
-            </div>
-          `
-        })
-      });
-      
-      alert('Charity rejected and notified.');
+      alert('Charity rejected and removed.');
       fetchCharities();
       fetchStats();
     }
   }
 
+  // Filter charities based on selected tab
+  const filteredCharities = charities.filter(charity => {
+    if (selectedTab === 'pending') return !charity.is_verified;
+    if (selectedTab === 'verified') return charity.is_verified;
+    return true;
+  });
+
+  // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f5f4f2] flex items-center justify-center">
-        <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking admin access...</p>
+        </div>
       </div>
     );
   }
 
-  if (!isAdmin) {
-    return null;
+  // Error state (Access Denied)
+  if (error || !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
+          <div className="mb-4">
+            <svg className="mx-auto h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+          <p className="text-gray-600 mb-6">
+            {error || 'You need admin privileges to access this page.'}
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push('/login')}
+              className="w-full bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700"
+            >
+              Go to Login
+            </button>
+            <button
+              onClick={() => router.push('/')}
+              className="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+            >
+              Go to Home
+            </button>
+          </div>
+          {user && (
+            <p className="mt-4 text-sm text-gray-500">
+              Logged in as: {user.email}
+            </p>
+          )}
+        </div>
+      </div>
+    );
   }
 
+  // Admin Dashboard
   return (
-    <div className="min-h-screen bg-[#f5f4f2]">
-      <div className="container mx-auto px-8 py-12 max-w-6xl">
-        
-        {/* Header with Sign Out */}
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-4xl font-serif text-[#3a3a3a] mb-3">Admin Dashboard</h1>
-            <p className="text-lg" style={{color: '#8B8589'}}>
-              Manage charity applications and view platform statistics
-            </p>
-          </div>
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              router.push('/login');
-            }}
-            className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Sign Out
-          </button>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">Welcome back, {user?.email}</p>
         </div>
 
-        {/* Statistics Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="text-sm text-gray-600 mb-1">Total Charities</div>
-            <div className="text-3xl font-bold text-[#000080]">{stats.totalCharities}</div>
-            <div className="text-xs text-gray-500 mt-2">
-              {stats.pendingCharities} pending approval
-            </div>
+        {/* Statistics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-sm font-medium text-gray-500">Total Charities</h3>
+            <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalCharities}</p>
           </div>
-
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="text-sm text-gray-600 mb-1">Urgent Needs</div>
-            <div className="text-3xl font-bold text-[#FF8559]">{stats.totalNeeds}</div>
-            <div className="text-xs text-gray-500 mt-2">
-              {stats.claimedNeeds} claimed
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="text-sm text-gray-600 mb-1">Families</div>
-            <div className="text-3xl font-bold text-[#667eea]">{stats.totalFamilies}</div>
-            <div className="text-xs text-gray-500 mt-2">
-              {stats.fullyFundedFamilies} fully funded
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="text-sm text-gray-600 mb-1">Verified Charities</div>
-            <div className="text-3xl font-bold text-[#00b894]">{stats.verifiedCharities}</div>
-            <div className="text-xs text-gray-500 mt-2">
-              Active on platform
-            </div>
-          </div>
-        </div>
-
-        {/* Pending Charities */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-2xl font-serif text-[#3a3a3a] mb-4">
-            Pending Verification ({pendingCharities.length})
-          </h2>
           
-          {pendingCharities.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No pending applications</p>
-          ) : (
-            <div className="space-y-4">
-              {pendingCharities.map(charity => (
-                <div key={charity.id} className="border border-amber-300 bg-amber-50 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-[#3a3a3a]">{charity.name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{charity.address}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Applied: {new Date(charity.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span className="bg-amber-200 text-amber-800 text-xs font-bold px-3 py-1 rounded-full">
-                      PENDING
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-700">Email:</span>
-                      <p className="text-gray-600">{charity.contact_email}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Phone:</span>
-                      <p className="text-gray-600">{charity.phone || 'Not provided'}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">EIN:</span>
-                      <p className="text-gray-600">{charity.ein || 'Not provided'}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Zip Code:</span>
-                      <p className="text-gray-600">{charity.zip_code}</p>
-                    </div>
-                  </div>
-
-                  {charity.auto_response_message && (
-                    <div className="mb-4 p-3 bg-white rounded text-xs">
-                      <strong className="text-gray-700">Auto-response message:</strong>
-                      <p className="text-gray-600 mt-1">{charity.auto_response_message}</p>
-                    </div>
-                  )}
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleApprove(charity.id, charity.name, charity.contact_email)}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
-                    >
-                      ✓ Approve
-                    </button>
-                    <button
-                      onClick={() => handleReject(charity.id, charity.contact_email, charity.name)}
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
-                    >
-                      ✗ Reject
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Verified Charities */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-2xl font-serif text-[#3a3a3a] mb-4">
-            Verified Charities ({verifiedCharities.length})
-          </h2>
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-sm font-medium text-gray-500">Pending Approval</h3>
+            <p className="text-3xl font-bold text-orange-600 mt-2">{stats.pendingCharities}</p>
+          </div>
           
-          {verifiedCharities.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No verified charities yet</p>
-          ) : (
-            <div className="space-y-3">
-              {verifiedCharities.map(charity => (
-                <div key={charity.id} className="border border-green-200 bg-green-50 rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-[#3a3a3a]">{charity.name}</h3>
-                      <p className="text-sm text-gray-600">{charity.contact_email} · {charity.phone || 'No phone'}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Verified: {new Date(charity.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span className="bg-green-200 text-green-800 text-xs font-bold px-3 py-1 rounded-full">
-                      VERIFIED
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-sm font-medium text-gray-500">Verified Charities</h3>
+            <p className="text-3xl font-bold text-green-600 mt-2">{stats.verifiedCharities}</p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-sm font-medium text-gray-500">Total Families</h3>
+            <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalFamilies}</p>
+          </div>
         </div>
 
+        {/* Tabs */}
+        <div className="bg-white rounded-lg shadow mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="flex -mb-px">
+              <button
+                onClick={() => setSelectedTab('pending')}
+                className={`py-4 px-6 border-b-2 font-medium text-sm ${
+                  selectedTab === 'pending'
+                    ? 'border-orange-600 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Pending ({stats.pendingCharities})
+              </button>
+              <button
+                onClick={() => setSelectedTab('verified')}
+                className={`py-4 px-6 border-b-2 font-medium text-sm ${
+                  selectedTab === 'verified'
+                    ? 'border-orange-600 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Verified ({stats.verifiedCharities})
+              </button>
+              <button
+                onClick={() => setSelectedTab('all')}
+                className={`py-4 px-6 border-b-2 font-medium text-sm ${
+                  selectedTab === 'all'
+                    ? 'border-orange-600 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                All Charities ({stats.totalCharities})
+              </button>
+            </nav>
+          </div>
+
+          {/* Charities List */}
+          <div className="p-6">
+            {filteredCharities.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No charities found.</p>
+            ) : (
+              <div className="space-y-4">
+                {filteredCharities.map((charity) => (
+                  <div key={charity.id} className="border border-gray-200 rounded-lg p-4 hover:border-orange-300">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900">{charity.name}</h3>
+                          {charity.is_verified ? (
+                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                              Verified
+                            </span>
+                          ) : (
+                            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                              Pending
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-gray-600 text-sm mb-2">{charity.description}</p>
+                        <div className="text-sm text-gray-500">
+                          <p><strong>Contact:</strong> {charity.contact_name}</p>
+                          <p><strong>Email:</strong> {charity.contact_email}</p>
+                          <p><strong>Phone:</strong> {charity.contact_phone}</p>
+                          {charity.website && <p><strong>Website:</strong> <a href={charity.website} target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">{charity.website}</a></p>}
+                          <p className="mt-2"><strong>Created:</strong> {new Date(charity.created_at).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      
+                      {!charity.is_verified && (
+                        <div className="flex gap-2 ml-4">
+                          <button
+                            onClick={() => approveCharity(charity.id)}
+                            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => rejectCharity(charity.id)}
+                            className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
