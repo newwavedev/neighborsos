@@ -14,49 +14,59 @@ export default function ContactPage() {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus('idle');
+  e.preventDefault();
+  setIsSubmitting(true);
+  setSubmitStatus('idle');
 
-    try {
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: 'info@neighborsos.org',
-          subject: `Contact Form: ${formData.category.toUpperCase()} - ${formData.subject}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2>New Contact Form Submission</h2>
-              <p><strong>Category:</strong> ${formData.category}</p>
-              <p><strong>Name:</strong> ${formData.name}</p>
-              <p><strong>Email:</strong> ${formData.email}</p>
-              <p><strong>Subject:</strong> ${formData.subject}</p>
-              <p><strong>Message:</strong></p>
-              <p style="white-space: pre-wrap;">${formData.message}</p>
-            </div>
-          `
-        })
-      });
+  try {
+    const response = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: 'info@neighborsos.org',
+        subject: `Contact Form: ${formData.category.toUpperCase()} - ${formData.subject}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>New Contact Form Submission</h2>
+            <p><strong>Category:</strong> ${formData.category}</p>
+            <p><strong>Name:</strong> ${formData.name}</p>
+            <p><strong>Email:</strong> ${formData.email}</p>
+            <p><strong>Subject:</strong> ${formData.subject}</p>
+            <p><strong>Message:</strong></p>
+            <p style="white-space: pre-wrap;">${formData.message}</p>
+          </div>
+        `,
+        apiKey: process.env.NEXT_PUBLIC_EMAIL_API_KEY // Optional internal validation
+      })
+    });
 
-      if (response.ok) {
-        setSubmitStatus('success');
-        setFormData({
-          name: '',
-          email: '',
-          category: 'general',
-          subject: '',
-          message: ''
-        });
-      } else {
-        setSubmitStatus('error');
-      }
-    } catch (error) {
+    const result = await response.json();
+
+    if (response.status === 429) {
       setSubmitStatus('error');
-    } finally {
       setIsSubmitting(false);
+      alert(`Rate limit exceeded. Please try again after ${new Date(result.reset).toLocaleTimeString()}`);
+      return;
     }
-  };
+
+    if (response.ok) {
+      setSubmitStatus('success');
+      setFormData({
+        name: '',
+        email: '',
+        category: 'general',
+        subject: '',
+        message: ''
+      });
+    } else {
+      setSubmitStatus('error');
+    }
+  } catch (error) {
+    setSubmitStatus('error');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#f5f4f2]">
