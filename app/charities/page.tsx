@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { sanitizeText, sanitizeNumber } from '@/lib/sanitize';
 
 export default function CharitiesPage() {
   const router = useRouter();
@@ -107,21 +108,46 @@ export default function CharitiesPage() {
     );
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!selectedCharity || !itemName) return;
+  
 
-    setIsSubmitting(true);
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  if (!selectedCharity || !itemName) return;
+
+  setIsSubmitting(true);
+
+  try {
+    // Sanitize inputs
+    const sanitizedData = {
+      itemName: sanitizeText(itemName),
+      quantity: sanitizeNumber(quantity, 1, 10000),
+      category: sanitizeText(category),
+      urgencyHours: sanitizeNumber(urgencyHours, 1, 168),
+      notes: sanitizeText(notes),
+    };
+
+    // Validate
+    if (!sanitizedData.itemName || sanitizedData.itemName.length < 3) {
+      alert('Please enter a valid item name (at least 3 characters)');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!sanitizedData.category) {
+      alert('Please select a category');
+      setIsSubmitting(false);
+      return;
+    }
 
     const { error } = await supabase
       .from('urgent_needs')
       .insert({
         charity_id: selectedCharity,
-        item_name: itemName,
-        quantity: parseInt(quantity),
-        category: category,
-        urgency_hours: parseInt(urgencyHours),
-        notes: notes,
+        item_name: sanitizedData.itemName,
+        quantity: sanitizedData.quantity,
+        category: sanitizedData.category,
+        urgency_hours: sanitizedData.urgencyHours,
+        notes: sanitizedData.notes,
         status: 'available'
       });
 
@@ -143,10 +169,12 @@ export default function CharitiesPage() {
       
       if (data) setMyNeeds(data);
     }
-
+  } catch (err: any) {
+    alert(err.message || 'Error adding item. Please try again.');
+  } finally {
     setIsSubmitting(false);
   }
-
+}
   async function handleDelete(needId: string) {
     if (!confirm('Are you sure you want to delete this item?')) return;
 

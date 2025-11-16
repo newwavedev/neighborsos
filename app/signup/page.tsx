@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeZipCode } from '@/lib/sanitize';
+
 
 export default function SignupPage() {
   const [charityName, setCharityName] = useState('');
@@ -18,11 +20,14 @@ export default function SignupPage() {
   const router = useRouter();
   const [autoResponseMessage, setAutoResponseMessage] = useState('');
 
-  async function handleSignup(e: React.FormEvent) {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
 
+
+async function handleSignup(e: React.FormEvent) {
+  e.preventDefault();
+  setIsLoading(true);
+  setError('');
+
+  try {
     // Validation
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -36,9 +41,33 @@ export default function SignupPage() {
       return;
     }
 
+    // Sanitize all inputs
+    const sanitizedData = {
+      name: sanitizeText(charityName),
+      email: sanitizeEmail(contactEmail),
+      address: sanitizeText(address),
+      zipCode: sanitizeZipCode(zipCode),
+      phone: phone ? sanitizePhone(phone) : '',
+      ein: ein ? sanitizeText(ein) : '',
+      autoResponseMessage: sanitizeText(autoResponseMessage),
+    };
+
+    // Validate sanitized data
+    if (!sanitizedData.name || sanitizedData.name.length < 2) {
+      setError('Please enter a valid organization name');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!sanitizedData.autoResponseMessage || sanitizedData.autoResponseMessage.length < 10) {
+      setError('Please enter a detailed auto-response message');
+      setIsLoading(false);
+      return;
+    }
+
     // Create user account
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: contactEmail,
+      email: sanitizedData.email,
       password: password,
     });
 
@@ -47,6 +76,55 @@ export default function SignupPage() {
       setIsLoading(false);
       return;
     }
+
+    // Create charity record with sanitized data
+    const { error: charityError } = await supabase
+      .from('charities')
+      .insert({
+        name: sanitizedData.name,
+        contact_email: sanitizedData.email,
+        address: sanitizedData.address,
+        phone: sanitizedData.phone,
+        zip_code: sanitizedData.zipCode,
+        ein: sanitizedData.ein,
+        auto_response_message: sanitizedData.autoResponseMessage,
+        verified: false,
+        user_id: authData.user?.id,
+      });
+
+    if (charityError) {
+      setError('Error creating charity profile. Please contact support.');
+      setIsLoading(false);
+      return;
+    }
+
+    // Send welcome email (same as before)
+    await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: sanitizedData.email,
+        subject: 'Welcome to NeighborSOS - Application Received',
+        html: `
+          <h2>Welcome to NeighborSOS!</h2>
+          <p>Thank you for applying, <strong>${sanitizedData.name}</strong>!</p>
+          <p>We've received your application and will review it within 24-48 hours.</p>
+          <p>You'll receive another email once your charity is verified and you can start posting urgent needs.</p>
+          <br>
+          <p>Questions? Reply to this email.</p>
+          <p>- The NeighborSOS Team</p>
+        `
+      })
+    });
+
+    alert('Account created! Check your email for confirmation. You will receive another email when approved.');
+    router.push('/login');
+
+  } catch (err: any) {
+    setError(err.message || 'An error occurred. Please try again.');
+    setIsLoading(false);
+  }
+}
 
     // Create charity record
 const { error: charityError } = await supabase

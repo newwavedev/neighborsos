@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { sanitizeText, sanitizeEmail, sanitizeNumber } from '@/lib/sanitize';
 
 export default function AdoptAFamilyPage() {
   const [families, setFamilies] = useState<any[]>([]);
@@ -54,270 +55,279 @@ export default function AdoptAFamilyPage() {
   async function handleAdoptFamily() {
     if (!donorEmail || !donorName || !donationAmount || !selectedFamily) return;
 
-    const amount = parseFloat(donationAmount);
-    if (isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid donation amount');
-      return;
-    }
+    try {
+      // Sanitize inputs
+      const sanitizedData = {
+        name: sanitizeText(donorName),
+        email: sanitizeEmail(donorEmail),
+        amount: sanitizeNumber(donationAmount, 1, 100000),
+        message: splitMessage ? sanitizeText(splitMessage) : '',
+        friendEmails: friendEmails
+          .filter(email => email && email.trim())
+          .map(email => sanitizeEmail(email))
+      };
 
-    setIsSubmitting(true);
+      setIsSubmitting(true);
 
-    const { error: adoptionError } = await supabase
-      .from('family_adoptions')
-      .insert({
-        family_id: selectedFamily.id,
-        donor_name: donorName,
-        donor_email: donorEmail,
-        amount_committed: amount
+      const { error: adoptionError } = await supabase
+        .from('family_adoptions')
+        .insert({
+          family_id: selectedFamily.id,
+          donor_name: sanitizedData.name,
+          donor_email: sanitizedData.email,
+          amount_committed: sanitizedData.amount
+        });
+
+      if (adoptionError) {
+        alert('Error processing adoption. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const newTotal = selectedFamily.amount_committed + sanitizedData.amount;
+      const isFullyAdopted = newTotal >= selectedFamily.estimated_cost;
+
+      const { error: updateError } = await supabase
+        .from('adopt_a_family')
+        .update({
+          amount_committed: newTotal,
+          status: isFullyAdopted ? 'fully_adopted' : 'partially_adopted'
+        })
+        .eq('id', selectedFamily.id);
+
+      if (updateError) {
+        alert('Error updating family status.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const deadlineDate = new Date(selectedFamily.urgency_date).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       });
 
-    if (adoptionError) {
-      alert('Error processing adoption. Please try again.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    const newTotal = selectedFamily.amount_committed + amount;
-    const isFullyAdopted = newTotal >= selectedFamily.estimated_cost;
-
-    const { error: updateError } = await supabase
-      .from('adopt_a_family')
-      .update({
-        amount_committed: newTotal,
-        status: isFullyAdopted ? 'fully_adopted' : 'partially_adopted'
-      })
-      .eq('id', selectedFamily.id);
-
-    if (updateError) {
-      alert('Error updating family status.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    const deadlineDate = new Date(selectedFamily.urgency_date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-
-    await fetch('/api/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: donorEmail,
-        subject: `Thank you for sponsoring ${selectedFamily.family_name}! ✨`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 10px;">
-            
-            <div style="text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
-              <h1 style="color: #ffffff; font-size: 32px; margin: 0;">✨ Thank You! ✨</h1>
-              <p style="color: #ffffff; font-size: 18px; margin: 10px 0;">You're Making the Holidays Special</p>
-            </div>
-            
-            <div style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); border-radius: 10px; padding: 25px; margin: 25px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center;">
-              <p style="font-size: 18px; margin: 0 0 15px 0; color: #2d3436;">You've committed to sponsoring:</p>
-              <h2 style="font-size: 28px; font-weight: bold; color: #2d3436; margin: 0;">
-                ${selectedFamily.family_name}
-              </h2>
-              <p style="font-size: 16px; color: #636e72; margin: 15px 0 0 0;">
-                Family of ${selectedFamily.family_size} • Your contribution: $${amount}
-              </p>
-            </div>
-            
-            <div style="background-color: #fff3e6; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #fdcb6e;">
-              <h3 style="color: #2d3436; margin-top: 0; font-size: 18px;">🎁 What This Family Needs:</h3>
-              <p style="line-height: 1.6; color: #2d3436; font-size: 15px; margin: 10px 0;">
-                ${selectedFamily.specific_needs}
-              </p>
-              ${selectedFamily.story ? `
-                <p style="line-height: 1.6; color: #636e72; font-size: 14px; margin: 15px 0 0 0; font-style: italic; padding-top: 15px; border-top: 1px solid #ddd;">
-                  "${selectedFamily.story}"
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: sanitizedData.email,
+          subject: `Thank you for sponsoring ${selectedFamily.family_name}! ✨`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 10px;">
+              
+              <div style="text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
+                <h1 style="color: #ffffff; font-size: 32px; margin: 0;">✨ Thank You! ✨</h1>
+                <p style="color: #ffffff; font-size: 18px; margin: 10px 0;">You're Making the Holidays Special</p>
+              </div>
+              
+              <div style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); border-radius: 10px; padding: 25px; margin: 25px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center;">
+                <p style="font-size: 18px; margin: 0 0 15px 0; color: #2d3436;">You've committed to sponsoring:</p>
+                <h2 style="font-size: 28px; font-weight: bold; color: #2d3436; margin: 0;">
+                  ${selectedFamily.family_name}
+                </h2>
+                <p style="font-size: 16px; color: #636e72; margin: 15px 0 0 0;">
+                  Family of ${selectedFamily.family_size} • Your contribution: $${sanitizedData.amount}
                 </p>
-              ` : ''}
-            </div>
-            
-            <div style="background: linear-gradient(135deg, #ff7675 0%, #d63031 100%); padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center; box-shadow: 0 4px 8px rgba(214, 48, 49, 0.3);">
-              <h3 style="color: #ffffff; margin: 0 0 10px 0; font-size: 20px;">📅 IMPORTANT DEADLINE</h3>
-              <p style="color: #ffffff; font-size: 24px; font-weight: bold; margin: 10px 0;">
-                ${deadlineDate}
-              </p>
-              <p style="color: #ffffff; font-size: 14px; margin: 10px 0 0 0;">
-                Please drop off or ship gifts by this date to ensure the family receives them on time.
-              </p>
-            </div>
-            
-            <div style="background-color: #f0f7ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
-              <h3 style="color: #2d3436; margin-top: 0; font-size: 18px;">📍 Drop-Off & Shipping Information</h3>
-              <p style="line-height: 1.6; color: #2d3436; font-size: 14px;">
-                <strong>Organization:</strong> ${selectedFamily.charities.name}
-              </p>
-              ${selectedFamily.charities.auto_response_message ? `
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-                  <p style="line-height: 1.6; color: #2d3436; font-size: 14px;">
-                    ${selectedFamily.charities.auto_response_message.replace(/\n/g, '<br>')}
+              </div>
+              
+              <div style="background-color: #fff3e6; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #fdcb6e;">
+                <h3 style="color: #2d3436; margin-top: 0; font-size: 18px;">🎁 What This Family Needs:</h3>
+                <p style="line-height: 1.6; color: #2d3436; font-size: 15px; margin: 10px 0;">
+                  ${selectedFamily.specific_needs}
+                </p>
+                ${selectedFamily.story ? `
+                  <p style="line-height: 1.6; color: #636e72; font-size: 14px; margin: 15px 0 0 0; font-style: italic; padding-top: 15px; border-top: 1px solid #ddd;">
+                    "${selectedFamily.story}"
                   </p>
-                </div>
-              ` : ''}
-            </div>
-            
-            ${!isFullyAdopted && (selectedFamily.estimated_cost - newTotal > 0) ? `
-              <div style="background-color: #e8f4f8; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
-                <p style="color: #667eea; font-weight: bold; margin: 0; font-size: 15px;">
-                  💡 This family still needs $${selectedFamily.estimated_cost - newTotal} in support.
-                </p>
-                <p style="color: #636e72; margin: 10px 0 0 0; font-size: 13px;">
-                  Share with friends who might want to help!
-                </p>
+                ` : ''}
               </div>
-            ` : `
-              <div style="background-color: #d5f4e6; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
-                <p style="color: #00b894; font-weight: bold; margin: 0; font-size: 16px;">
-                  ✨ This family is now fully sponsored! ✨
-                </p>
-              </div>
-            `}
-            
-            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e5e5;">
-              <p style="color: #636e72; margin: 5px 0; font-size: 14px;">Questions about your sponsorship?</p>
-              <p style="color: #636e72; margin: 5px 0; font-size: 14px;">
-                Contact ${selectedFamily.charities.name} at<br>
-                <a href="mailto:${selectedFamily.charities.contact_email}" style="color: #667eea; text-decoration: none; font-weight: bold;">${selectedFamily.charities.contact_email}</a>
-              </p>
               
-              <div style="margin-top: 25px; padding: 15px; background-color: #fff3cd; border-radius: 8px;">
-                <p style="margin: 0; font-size: 13px; color: #856404;">
-                  ⚠️ <strong>Don't see this email?</strong> Check your SPAM or Promotions folder.
+              <div style="background: linear-gradient(135deg, #ff7675 0%, #d63031 100%); padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center; box-shadow: 0 4px 8px rgba(214, 48, 49, 0.3);">
+                <h3 style="color: #ffffff; margin: 0 0 10px 0; font-size: 20px;">📅 IMPORTANT DEADLINE</h3>
+                <p style="color: #ffffff; font-size: 24px; font-weight: bold; margin: 10px 0;">
+                  ${deadlineDate}
+                </p>
+                <p style="color: #ffffff; font-size: 14px; margin: 10px 0 0 0;">
+                  Please drop off or ship gifts by this date to ensure the family receives them on time.
                 </p>
               </div>
               
-              <p style="color: #999; font-size: 12px; margin-top: 20px;">
-                Thank you for spreading joy through NeighborSOS! ✨<br>
-                <a href="https://neighborsos.org" style="color: #667eea; text-decoration: none;">neighborsos.org</a>
-              </p>
-            </div>
-          </div>
-        `
-      })
-    });
-
-    await fetch('/api/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: selectedFamily.charities.contact_email,
-        subject: `${isFullyAdopted ? '🎉 Family Fully Sponsored' : '✅ Partial Sponsorship'}: ${selectedFamily.family_name}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>${isFullyAdopted ? '🎉 Great news! A family is fully sponsored!' : '✅ Good news! Someone is helping a family!'}</h2>
-            
-            <div style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); border-radius: 10px; padding: 20px; margin: 25px 0;">
-              <h3 style="margin-top: 0; color: #2d3436;">Family: ${selectedFamily.family_name}</h3>
-              <p><strong>Donor contribution:</strong> $${amount}</p>
-              <p><strong>Total committed:</strong> $${newTotal} of $${selectedFamily.estimated_cost}</p>
-              ${!isFullyAdopted ? `<p><strong>Still needed:</strong> $${selectedFamily.estimated_cost - newTotal}</p>` : `<p style="color: #00b894; font-weight: bold;">✓ Fully funded!</p>`}
-            </div>
-            
-            <h3>Donor Information:</h3>
-            <ul>
-              <li><strong>Name:</strong> ${donorName}</li>
-              <li><strong>Email:</strong> ${donorEmail}</li>
-            </ul>
-            
-            <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #667eea; margin: 15px 0;">
-              Your auto-response has been sent to the donor with your delivery/coordination instructions.
-            </div>
-            
-            <p style="margin-top: 20px;"><strong>Important:</strong> The donor has been informed that gifts must be delivered by ${deadlineDate}.</p>
-            
-            <p>- NeighborSOS</p>
-          </div>
-        `
-      })
-    });
-
-    if (sponsorshipType === 'split' && friendEmails.length > 0) {
-      const validFriendEmails = friendEmails.filter(email => email && email.includes('@'));
-      
-      for (const friendEmail of validFriendEmails) {
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: friendEmail,
-            subject: `${donorName} invited you to co-sponsor ${selectedFamily.family_name}! ✨`,
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 10px;">
-                
-                <div style="text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
-                  <h1 style="color: #ffffff; font-size: 28px; margin: 0;">You're Invited! ✨</h1>
-                  <p style="color: #ffffff; font-size: 16px; margin: 10px 0;">Help sponsor a family for the holidays</p>
-                </div>
-                
-                <p style="font-size: 16px; color: #2d3436; line-height: 1.6;">
-                  Hi there!
+              <div style="background-color: #f0f7ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+                <h3 style="color: #2d3436; margin-top: 0; font-size: 18px;">📍 Drop-Off & Shipping Information</h3>
+                <p style="line-height: 1.6; color: #2d3436; font-size: 14px;">
+                  <strong>Organization:</strong> ${selectedFamily.charities.name}
                 </p>
-                
-                <p style="font-size: 16px; color: #2d3436; line-height: 1.6;">
-                  <strong>${donorName}</strong> is sponsoring <strong>${selectedFamily.family_name}</strong> (a family of ${selectedFamily.family_size}) this holiday season and invited you to join!
-                </p>
-                
-                ${splitMessage ? `
-                  <div style="background-color: #f0f7ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
-                    <p style="font-style: italic; color: #2d3436; margin: 0; font-size: 15px;">
-                      "${splitMessage}"
+                ${selectedFamily.charities.auto_response_message ? `
+                  <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+                    <p style="line-height: 1.6; color: #2d3436; font-size: 14px;">
+                      ${selectedFamily.charities.auto_response_message.replace(/\n/g, '<br>')}
                     </p>
                   </div>
                 ` : ''}
-                
-                <div style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); border-radius: 10px; padding: 20px; margin: 25px 0;">
-                  <h3 style="margin-top: 0; color: #2d3436;">Family Details:</h3>
-                  <p style="margin: 5px 0; color: #2d3436;"><strong>Family Size:</strong> ${selectedFamily.family_size} people</p>
-                  <p style="margin: 5px 0; color: #2d3436;"><strong>Total Cost:</strong> $${selectedFamily.estimated_cost}</p>
-                  <p style="margin: 5px 0; color: #2d3436;"><strong>Already Committed:</strong> $${newTotal} (including ${donorName}'s $${amount})</p>
-                  <p style="margin: 5px 0; color: #667eea; font-weight: bold;"><strong>Still Needed:</strong> $${Math.max(0, selectedFamily.estimated_cost - newTotal)}</p>
+              </div>
+              
+              ${!isFullyAdopted && (selectedFamily.estimated_cost - newTotal > 0) ? `
+                <div style="background-color: #e8f4f8; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                  <p style="color: #667eea; font-weight: bold; margin: 0; font-size: 15px;">
+                    💡 This family still needs $${selectedFamily.estimated_cost - newTotal} in support.
+                  </p>
+                  <p style="color: #636e72; margin: 10px 0 0 0; font-size: 13px;">
+                    Share with friends who might want to help!
+                  </p>
                 </div>
-                
-                <div style="background-color: #fff3e6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                  <h4 style="margin-top: 0; color: #2d3436;">What they need:</h4>
-                  <p style="color: #2d3436; margin: 0; font-size: 14px;">${selectedFamily.specific_needs}</p>
+              ` : `
+                <div style="background-color: #d5f4e6; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                  <p style="color: #00b894; font-weight: bold; margin: 0; font-size: 16px;">
+                    ✨ This family is now fully sponsored! ✨
+                  </p>
                 </div>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="https://neighborsos.org/adopt-a-family" 
-                     style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
-                    View Family & Contribute
-                  </a>
-                </div>
-                
-                <p style="font-size: 14px; color: #636e72; text-align: center; margin-top: 30px;">
-                  Any amount helps! Join ${donorName} in making the holidays special for this family.
+              `}
+              
+              <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e5e5;">
+                <p style="color: #636e72; margin: 5px 0; font-size: 14px;">Questions about your sponsorship?</p>
+                <p style="color: #636e72; margin: 5px 0; font-size: 14px;">
+                  Contact ${selectedFamily.charities.name} at<br>
+                  <a href="mailto:${selectedFamily.charities.contact_email}" style="color: #667eea; text-decoration: none; font-weight: bold;">${selectedFamily.charities.contact_email}</a>
                 </p>
                 
-                <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 30px 0;">
+                <div style="margin-top: 25px; padding: 15px; background-color: #fff3cd; border-radius: 8px;">
+                  <p style="margin: 0; font-size: 13px; color: #856404;">
+                    ⚠️ <strong>Don't see this email?</strong> Check your SPAM or Promotions folder.
+                  </p>
+                </div>
                 
-                <p style="font-size: 12px; color: #999; text-align: center;">
-                  You received this invitation from ${donorName} via NeighborSOS<br>
+                <p style="color: #999; font-size: 12px; margin-top: 20px;">
+                  Thank you for spreading joy through NeighborSOS! ✨<br>
                   <a href="https://neighborsos.org" style="color: #667eea; text-decoration: none;">neighborsos.org</a>
                 </p>
               </div>
-            `
-          })
-        });
+            </div>
+          `
+        })
+      });
+
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: selectedFamily.charities.contact_email,
+          subject: `${isFullyAdopted ? '🎉 Family Fully Sponsored' : '✅ Partial Sponsorship'}: ${selectedFamily.family_name}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2>${isFullyAdopted ? '🎉 Great news! A family is fully sponsored!' : '✅ Good news! Someone is helping a family!'}</h2>
+              
+              <div style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); border-radius: 10px; padding: 20px; margin: 25px 0;">
+                <h3 style="margin-top: 0; color: #2d3436;">Family: ${selectedFamily.family_name}</h3>
+                <p><strong>Donor contribution:</strong> $${sanitizedData.amount}</p>
+                <p><strong>Total committed:</strong> $${newTotal} of $${selectedFamily.estimated_cost}</p>
+                ${!isFullyAdopted ? `<p><strong>Still needed:</strong> $${selectedFamily.estimated_cost - newTotal}</p>` : `<p style="color: #00b894; font-weight: bold;">✓ Fully funded!</p>`}
+              </div>
+              
+              <h3>Donor Information:</h3>
+              <ul>
+                <li><strong>Name:</strong> ${sanitizedData.name}</li>
+                <li><strong>Email:</strong> ${sanitizedData.email}</li>
+              </ul>
+              
+              <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #667eea; margin: 15px 0;">
+                Your auto-response has been sent to the donor with your delivery/coordination instructions.
+              </div>
+              
+              <p style="margin-top: 20px;"><strong>Important:</strong> The donor has been informed that gifts must be delivered by ${deadlineDate}.</p>
+              
+              <p>- NeighborSOS</p>
+            </div>
+          `
+        })
+      });
+
+      if (sponsorshipType === 'split' && sanitizedData.friendEmails.length > 0) {
+        for (const friendEmail of sanitizedData.friendEmails) {
+          await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: friendEmail,
+              subject: `${sanitizedData.name} invited you to co-sponsor ${selectedFamily.family_name}! ✨`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 10px;">
+                  
+                  <div style="text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
+                    <h1 style="color: #ffffff; font-size: 28px; margin: 0;">You're Invited! ✨</h1>
+                    <p style="color: #ffffff; font-size: 16px; margin: 10px 0;">Help sponsor a family for the holidays</p>
+                  </div>
+                  
+                  <p style="font-size: 16px; color: #2d3436; line-height: 1.6;">
+                    Hi there!
+                  </p>
+                  
+                  <p style="font-size: 16px; color: #2d3436; line-height: 1.6;">
+                    <strong>${sanitizedData.name}</strong> is sponsoring <strong>${selectedFamily.family_name}</strong> (a family of ${selectedFamily.family_size}) this holiday season and invited you to join!
+                  </p>
+                  
+                  ${sanitizedData.message ? `
+                    <div style="background-color: #f0f7ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+                      <p style="font-style: italic; color: #2d3436; margin: 0; font-size: 15px;">
+                        "${sanitizedData.message}"
+                      </p>
+                    </div>
+                  ` : ''}
+                  
+                  <div style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); border-radius: 10px; padding: 20px; margin: 25px 0;">
+                    <h3 style="margin-top: 0; color: #2d3436;">Family Details:</h3>
+                    <p style="margin: 5px 0; color: #2d3436;"><strong>Family Size:</strong> ${selectedFamily.family_size} people</p>
+                    <p style="margin: 5px 0; color: #2d3436;"><strong>Total Cost:</strong> $${selectedFamily.estimated_cost}</p>
+                    <p style="margin: 5px 0; color: #2d3436;"><strong>Already Committed:</strong> $${newTotal} (including ${sanitizedData.name}'s $${sanitizedData.amount})</p>
+                    <p style="margin: 5px 0; color: #667eea; font-weight: bold;"><strong>Still Needed:</strong> $${Math.max(0, selectedFamily.estimated_cost - newTotal)}</p>
+                  </div>
+                  
+                  <div style="background-color: #fff3e6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <h4 style="margin-top: 0; color: #2d3436;">What they need:</h4>
+                    <p style="color: #2d3436; margin: 0; font-size: 14px;">${selectedFamily.specific_needs}</p>
+                  </div>
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://neighborsos.org/adopt-a-family" 
+                       style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                      View Family & Contribute
+                    </a>
+                  </div>
+                  
+                  <p style="font-size: 14px; color: #636e72; text-align: center; margin-top: 30px;">
+                    Any amount helps! Join ${sanitizedData.name} in making the holidays special for this family.
+                  </p>
+                  
+                  <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 30px 0;">
+                  
+                  <p style="font-size: 12px; color: #999; text-align: center;">
+                    You received this invitation from ${sanitizedData.name} via NeighborSOS<br>
+                    <a href="https://neighborsos.org" style="color: #667eea; text-decoration: none;">neighborsos.org</a>
+                  </p>
+                </div>
+              `
+            })
+          });
+        }
       }
+
+      alert(`Thank you ${sanitizedData.name}! You've committed $${sanitizedData.amount} to help ${selectedFamily.family_name}.\n\nCheck your email (${sanitizedData.email}) for next steps and the deadline.\n\n⚠️ Check your SPAM folder if you don't see it.`);
+
+      await fetchFamilies();
+      setSelectedFamily(null);
+      setDonorName('');
+      setDonorEmail('');
+      setDonationAmount('');
+      setSponsorshipType('partial');
+      setFriendEmails(['']);
+      setSplitMessage('');
+      setIsSubmitting(false);
+
+    } catch (err: any) {
+      alert(err.message || 'Error processing sponsorship. Please try again.');
+      setIsSubmitting(false);
     }
-
-    alert(`Thank you ${donorName}! You've committed $${amount} to help ${selectedFamily.family_name}.\n\nCheck your email (${donorEmail}) for next steps and the deadline.\n\n⚠️ Check your SPAM folder if you don't see it.`);
-
-    await fetchFamilies();
-    setSelectedFamily(null);
-    setDonorName('');
-    setDonorEmail('');
-    setDonationAmount('');
-    setSponsorshipType('partial');
-    setFriendEmails(['']);
-    setSplitMessage('');
-    setIsSubmitting(false);
   }
 
   const getStatusColor = (family: any) => {
