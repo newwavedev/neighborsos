@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 
 
+
 export default function Home() {
   const [isScrolling, setIsScrolling] = useState(true);
   const [hoveredStory, setHoveredStory] = useState<number | null>(null);
