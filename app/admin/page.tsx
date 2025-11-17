@@ -131,6 +131,69 @@ export default function AdminPage() {
     }
   }
 
+  // Add this to your state variables at the top
+const [whitelistEmails, setWhitelistEmails] = useState<any[]>([]);
+const [newEmail, setNewEmail] = useState('');
+const [newNotes, setNewNotes] = useState('');
+
+// Add this function with your other functions
+async function fetchWhitelist() {
+  const { data } = await supabase
+    .from('early_access')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (data) {
+    setWhitelistEmails(data);
+  }
+}
+
+async function addToWhitelist(e: React.FormEvent) {
+  e.preventDefault();
+  
+  const { error } = await supabase
+    .from('early_access')
+    .insert([{ email: newEmail, notes: newNotes }]);
+  
+  if (!error) {
+    alert('Email added to early access list!');
+    setNewEmail('');
+    setNewNotes('');
+    fetchWhitelist();
+  } else {
+    alert('Error: ' + error.message);
+  }
+}
+
+async function removeFromWhitelist(id: string) {
+  if (!confirm('Remove this email from early access?')) return;
+  
+  const { error } = await supabase
+    .from('early_access')
+    .delete()
+    .eq('id', id);
+  
+  if (!error) {
+    alert('Email removed!');
+    fetchWhitelist();
+  }
+}
+
+// Update your useEffect to fetch whitelist
+useEffect(() => {
+  async function checkAdmin() {
+    // ... existing code ...
+    
+    if (isAdmin) {
+      fetchCharities();
+      fetchStats();
+      fetchWhitelist(); // Add this line
+    }
+  }
+  
+  checkAdmin();
+}, [router]);
+
   // Approve charity
   async function approveCharity(charityId: string) {
     const { error } = await supabase
@@ -250,6 +313,79 @@ export default function AdminPage() {
             <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalFamilies}</p>
           </div>
         </div>
+
+        {/* Early Access Whitelist Management */}
+<div className="bg-white rounded-lg shadow mb-6 p-6">
+  <h2 className="text-2xl font-bold text-gray-900 mb-4">Early Access Whitelist</h2>
+  <p className="text-gray-600 mb-6">
+    Add email addresses that can access the site before launch. They must log in to bypass the coming soon page.
+  </p>
+  
+  {/* Add Email Form */}
+  <form onSubmit={addToWhitelist} className="mb-6 pb-6 border-b border-gray-200">
+    <div className="grid md:grid-cols-2 gap-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Email Address
+        </label>
+        <input
+          type="email"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          placeholder="charity@example.com"
+          required
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Notes (optional)
+        </label>
+        <input
+          type="text"
+          value={newNotes}
+          onChange={(e) => setNewNotes(e.target.value)}
+          placeholder="e.g., ABC Charity - Demo access"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500"
+        />
+      </div>
+    </div>
+    <button
+      type="submit"
+      className="mt-4 bg-orange-600 text-white px-6 py-2 rounded-md hover:bg-orange-700"
+    >
+      Add to Whitelist
+    </button>
+  </form>
+  
+  {/* Whitelist Table */}
+  <div>
+    <h3 className="font-semibold text-gray-900 mb-3">
+      Current Whitelist ({whitelistEmails.length})
+    </h3>
+    {whitelistEmails.length === 0 ? (
+      <p className="text-gray-500 italic">No emails in whitelist yet.</p>
+    ) : (
+      <div className="space-y-2">
+        {whitelistEmails.map((item) => (
+          <div key={item.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
+            <div>
+              <p className="font-medium text-gray-900">{item.email}</p>
+              {item.notes && <p className="text-sm text-gray-500">{item.notes}</p>}
+              <p className="text-xs text-gray-400">Added: {new Date(item.created_at).toLocaleDateString()}</p>
+            </div>
+            <button
+              onClick={() => removeFromWhitelist(item.id)}
+              className="text-red-600 hover:text-red-700 px-3 py-1 rounded-md hover:bg-red-50"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
 
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow mb-6">

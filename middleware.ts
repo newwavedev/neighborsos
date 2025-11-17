@@ -1,37 +1,70 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
   
-  // Allow admin access (you can test while it's locked)
-  if (pathname.startsWith('/admin') || pathname.startsWith('/login')) {
+  // Always allow these paths
+  if (
+    pathname.startsWith('/admin') || 
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/coming-soon') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon')
+  ) {
     return NextResponse.next();
   }
   
-  // Allow coming-soon page itself
-  if (pathname.startsWith('/coming-soon')) {
-    return NextResponse.next();
+  // Check if user has early access
+  try {
+    // Get session cookie
+    const token = request.cookies.get('sb-access-token')?.value;
+    
+    if (token) {
+      // Create Supabase client
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        }
+      );
+      
+      // Get user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user?.email) {
+        // Check if user is in whitelist
+        const { data: whitelist } = await supabase
+          .from('early_access')
+          .select('email')
+          .eq('email', user.email)
+          .single();
+        
+        if (whitelist) {
+          // User is whitelisted - allow access
+          return NextResponse.next();
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Whitelist check error:', error);
   }
   
-  // Allow API routes (for admin panel to work)
-  if (pathname.startsWith('/api')) {
-    return NextResponse.next();
-  }
-  
-  // Redirect everything else to coming-soon
-  return NextResponse.redirect(new URL('/coming-soon', request.url));
+  // Redirect to coming-soon for everyone else
+  const url = request.nextUrl.clone();
+  url.pathname = '/coming-soon';
+  return NextResponse.redirect(url);
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.svg$).*)',
   ],
 };
