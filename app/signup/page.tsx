@@ -95,27 +95,46 @@ export default function SignupPage() {
         return;
       }
 
-      // Send welcome email
-      await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: sanitizedData.email,
-          subject: 'Welcome to NeighborSOS - Application Received',
-          html: `
-            <h2>Welcome to NeighborSOS!</h2>
-            <p>Thank you for applying, <strong>${sanitizedData.name}</strong>!</p>
-            <p>We've received your application and will review it within 24-48 hours.</p>
-            <p>You'll receive another email once your charity is verified and you can start posting urgent needs.</p>
-            <br>
-            <p>Questions? Reply to this email.</p>
-            <p>- The NeighborSOS Team</p>
-          `
-        })
-      });
+    // Send welcome email with debugging
+console.log('🔍 Attempting to send welcome email to:', sanitizedData.email);
 
-      alert('Account created! Check your email for confirmation. You will receive another email when approved.');
-      router.push('/login');
+try {
+  const emailResponse = await fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: sanitizedData.email,
+      subject: 'Welcome to NeighborSOS - Application Received',
+      html: `
+        <h2>Welcome to NeighborSOS!</h2>
+        <p>Thank you for applying, <strong>${sanitizedData.name}</strong>!</p>
+        <p>We've received your application and will review it within 24-48 hours.</p>
+        <p>You'll receive another email once your charity is verified and you can start posting urgent needs.</p>
+        <br>
+        <p>Questions? Reply to this email.</p>
+        <p>- The NeighborSOS Team</p>
+      `
+    })
+  });
+
+  console.log('📧 Email API response status:', emailResponse.status);
+  
+  const emailData = await emailResponse.json();
+  console.log('📧 Email API response data:', emailData);
+
+  if (!emailResponse.ok) {
+    console.error('❌ Email failed:', emailData);
+    // Continue with registration even if email fails
+  } else {
+    console.log('✅ Welcome email sent successfully!');
+  }
+} catch (emailError) {
+  console.error('❌ Email error caught:', emailError);
+  // Continue with registration even if email fails
+}
+
+alert('Account created! Check your email for confirmation (check spam/junk if you don\'t see it). You will receive another email when approved.');
+router.push('/login');
 
     } catch (err: any) {
       setError(err.message || 'An error occurred. Please try again.');
